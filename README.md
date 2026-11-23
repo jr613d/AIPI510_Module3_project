@@ -4,9 +4,15 @@ AIPI 510 Module 3: build a reproducible machine learning pipeline, one step at a
 
 This is Jim's solo student project, developed with Codex as an AI coding and learning assistant. Jim makes project decisions, reviews the work, and merges pull requests; Codex helps with implementation, testing, and explanations.
 
-Our question is: **which customer profiles are associated with leaving a
-telecommunications company in the sample dataset?** Later, we will train a
-small classifier and serve it through an API and a browser interface.
+## Project overview
+
+Our question is: **which customer profiles are associated with leaving a telecommunications company in the sample dataset?** We will build a supervised binary classification model to predict `Churn` (`Yes` or `No`), then serve it through an API and a browser interface.
+
+Our primary evaluation metric is **ROC AUC**, which measures how well the model ranks customers who churn above customers who stay across classification thresholds. A score of 0.5 represents chance-level ranking, and 1.0 represents perfect ranking. An AUC of 0.8 does not mean 80% classification accuracy.
+
+We will also report **precision** (of customers flagged as churning, how many actually churned) and **recall** (of customers who actually churned, how many the model caught) at a classification threshold selected using validation data. Final evaluation will use held-out test data that is not used to fit the model or choose the threshold.
+
+Accuracy alone would be misleading: approximately 73.5% of customers in this sample stayed, so predicting `No` for everyone would appear 73.5% accurate while missing every customer who churned. These metrics will help us evaluate model behavior; the assignment emphasizes a reproducible production pipeline rather than achieving a particular score.
 
 ## Current step: project setup and data ingestion
 
