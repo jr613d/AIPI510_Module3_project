@@ -221,3 +221,7 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Recreated by src/ingest.py; summaries in reports/ are committed instead.
+data/raw/
+data/processed/
