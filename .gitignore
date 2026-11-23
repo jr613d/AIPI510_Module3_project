@@ -230,3 +230,13 @@ data/cloud/
 # Local Google authentication belongs outside Git.
 application_default_credentials.json
 service-account*.json
+
+# Recreated fitted pipelines; aggregate validation reports are committed instead.
+artifacts/
+
+# Project-local Python runtime and preserved pre-upgrade environment.
+.python-runtime/
+.venv-py310-backup/
+
+# macOS folder metadata.
+.DS_Store

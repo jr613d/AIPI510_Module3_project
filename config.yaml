@@ -17,3 +17,28 @@ storage:
   download_path: data/cloud/telco_churn.csv
   # From reports/data_summary.json: identifies the reviewed CLEANED CSV bytes.
   expected_sha256: 3281639149f21b9ae68c21245c383b35afdd2705ad005f1bc5c20da416430c35
+
+training:
+  model: logistic_regression
+  min_tenure_months: 1
+  random_state: 42
+  split:
+    train: 0.70
+    validation: 0.15
+    test: 0.15
+  numeric_features:
+    - tenure
+    - MonthlyCharges
+  categorical_features:
+    - Contract
+    - InternetService
+    - TechSupport
+    - OnlineSecurity
+    - PaymentMethod
+    - PaperlessBilling
+  logistic_regression:
+    C: 1.0
+    max_iter: 1000
+  threshold: 0.5  # Provisional; not tuned or finalized.
+  model_path: artifacts/churn_pipeline.joblib
+  validation_report: reports/training_validation.json
