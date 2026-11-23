@@ -7,3 +7,13 @@ paths:
   processed: data/processed/telco_churn.csv
   summary_json: reports/data_summary.json
   summary_markdown: reports/data_summary.md
+storage:
+  # Jim's Google Cloud project and bucket; credentials stay outside Git.
+  project: project-902e069e-c3ed-49c2-a13
+  bucket: kangaroo_baseball_field
+  # Object name inside the bucket, without gs:// or the bucket name.
+  object: telco_churn.csv
+  # Download separately so cloud verification cannot overwrite ingestion outputs.
+  download_path: data/cloud/telco_churn.csv
+  # From reports/data_summary.json: identifies the reviewed CLEANED CSV bytes.
+  expected_sha256: 3281639149f21b9ae68c21245c383b35afdd2705ad005f1bc5c20da416430c35
