@@ -96,7 +96,7 @@ def code_version(root=ROOT):
 
 
 def log_training_run(report, model_path, *, project, entity=None, mode="offline",
-                     run_name=None, run_root=ROOT, sdk=None):
+                     run_name=None, group=None, run_root=ROOT, sdk=None):
     """Log aggregate metrics and a snapshot of an existing model, never fit one.
 
     sdk is injectable for offline unit tests. No login or online sync is
@@ -138,7 +138,7 @@ def log_training_run(report, model_path, *, project, entity=None, mode="offline"
         report_copy = snapshot / "validation_report.json"
         report_copy.write_text(json.dumps(record, indent=2, allow_nan=False) + "\n", encoding="utf-8")
         with sdk.init(
-            project=project, entity=entity, mode=mode, name=run_name,
+            project=project, entity=entity, mode=mode, name=run_name, group=group,
             job_type="training-result", config=run_config, dir=str(run_root),
             save_code=False,
             settings=sdk.Settings(disable_git=True, disable_code=True, console="off"),
@@ -161,3 +161,68 @@ def log_training_run(report, model_path, *, project, entity=None, mode="offline"
             result = {"run_id": run.id, "mode": mode, "run_dir": run.dir,
                       "url": run.url if mode == "online" else None}
     return result
+
+
+THRESHOLD_COLUMNS = ("threshold", "flagged", "churners_caught", "false_alarms",
+                     "churners_missed", "precision", "recall")
+
+
+def _settings(sdk):
+    return sdk.Settings(disable_git=True, disable_code=True, console="off")
+
+
+def log_threshold_table(rows, *, data_sha256, project, entity=None, mode="offline",
+                        run_root=ROOT, sdk=None):
+    """Log a validation-only cutoff comparison as a W&B table and line chart."""
+    if mode not in ("offline", "online"):
+        raise ValueError("Tracking mode must be offline or online.")
+    if not rows or any(set(row) != set(THRESHOLD_COLUMNS) for row in rows):
+        raise ValueError(f"Each threshold row needs exactly: {', '.join(THRESHOLD_COLUMNS)}.")
+    if sdk is None:
+        import wandb as sdk
+    if sdk.run is not None:
+        raise RuntimeError("Finish the active W&B run before recording another result.")
+    Path(run_root).mkdir(parents=True, exist_ok=True)
+    config = {"evaluation_partition": "validation", "data_sha256": data_sha256, **code_version()}
+    with sdk.init(project=project, entity=entity, mode=mode, name="threshold-selection",
+                  group="model-selection", job_type="threshold-selection", config=config,
+                  dir=str(run_root), save_code=False, settings=_settings(sdk)) as run:
+        table = sdk.Table(columns=list(THRESHOLD_COLUMNS),
+                          data=[[row[name] for name in THRESHOLD_COLUMNS] for row in rows])
+        thresholds = [row["threshold"] for row in rows]
+        run.log({
+            "validation/threshold_table": table,
+            "validation/precision_recall_by_threshold": sdk.plot.line_series(
+                xs=thresholds, ys=[[row["precision"] for row in rows], [row["recall"] for row in rows]],
+                keys=["precision", "recall"], title="Precision and recall by threshold (validation)",
+                xname="threshold"),
+        })
+        run.summary["test_evaluated"] = False
+        return {"run_id": run.id, "mode": mode, "run_dir": run.dir,
+                "url": run.url if mode == "online" else None}
+
+
+def log_test_run(report, *, project, entity=None, mode="offline", run_root=ROOT, sdk=None):
+    """Log the one-time final test result as its own clearly labelled run."""
+    if mode not in ("offline", "online"):
+        raise ValueError("Tracking mode must be offline or online.")
+    if report.get("evaluation_partition") != "test" or report.get("test_evaluated") is not True:
+        raise ValueError("log_test_run records only the final test evaluation.")
+    if sdk is None:
+        import wandb as sdk
+    if sdk.run is not None:
+        raise RuntimeError("Finish the active W&B run before recording another result.")
+    Path(run_root).mkdir(parents=True, exist_ok=True)
+    metrics, counts = report["metrics"], report["metrics"]["confusion_matrix"]
+    config = {"evaluation_partition": "test", "training": deepcopy(report["settings"]),
+              "data_sha256": report["data_sha256"], "model_sha256": report["model_sha256"],
+              **code_version()}
+    with sdk.init(project=project, entity=entity, mode=mode, name="final-test",
+                  job_type="final-test", config=config, dir=str(run_root),
+                  save_code=False, settings=_settings(sdk)) as run:
+        logged = {f"test/{key}": metrics[key] for key in ("roc_auc", "precision", "recall", "threshold")}
+        logged.update({f"test/{key}": value for key, value in counts.items()})
+        run.log(logged)
+        run.summary["test_evaluated"] = True
+        return {"run_id": run.id, "mode": mode, "run_dir": run.dir,
+                "url": run.url if mode == "online" else None}

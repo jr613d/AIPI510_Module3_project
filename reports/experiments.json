@@ -1,0 +1,103 @@
+{
+  "evaluation_partition": "validation",
+  "test_evaluated": false,
+  "tracking_mode": "online",
+  "runs": [
+    {
+      "name": "eight_inputs-C0.01",
+      "feature_set": "eight_inputs",
+      "input_count": 8,
+      "encoded_columns": 20,
+      "C": 0.01,
+      "roc_auc": 0.8495866552640534,
+      "precision": 0.6666666666666666,
+      "recall": 0.5124555160142349,
+      "threshold": 0.5,
+      "wandb_run": "https://forge.coreweave.com/wandb/jr613-d/aipi510-churn/runs/bz278owc"
+    },
+    {
+      "name": "eight_inputs-C0.1",
+      "feature_set": "eight_inputs",
+      "input_count": 8,
+      "encoded_columns": 20,
+      "C": 0.1,
+      "roc_auc": 0.8490487093896844,
+      "precision": 0.6695652173913044,
+      "recall": 0.5480427046263345,
+      "threshold": 0.5,
+      "wandb_run": "https://forge.coreweave.com/wandb/jr613-d/aipi510-churn/runs/57ahhmp2"
+    },
+    {
+      "name": "eight_inputs-C1.0",
+      "feature_set": "eight_inputs",
+      "input_count": 8,
+      "encoded_columns": 20,
+      "C": 1.0,
+      "roc_auc": 0.8488464049582978,
+      "precision": 0.670995670995671,
+      "recall": 0.5516014234875445,
+      "threshold": 0.5,
+      "wandb_run": "https://forge.coreweave.com/wandb/jr613-d/aipi510-churn/runs/civewnyz"
+    },
+    {
+      "name": "eight_inputs-C10.0",
+      "feature_set": "eight_inputs",
+      "input_count": 8,
+      "encoded_columns": 20,
+      "C": 10.0,
+      "roc_auc": 0.8487452527426044,
+      "precision": 0.670995670995671,
+      "recall": 0.5516014234875445,
+      "threshold": 0.5,
+      "wandb_run": "https://forge.coreweave.com/wandb/jr613-d/aipi510-churn/runs/jwh2cnvj"
+    },
+    {
+      "name": "all_19-C0.01",
+      "feature_set": "all_19",
+      "input_count": 19,
+      "encoded_columns": 45,
+      "C": 0.01,
+      "roc_auc": 0.8514602701683724,
+      "precision": 0.6981132075471698,
+      "recall": 0.5266903914590747,
+      "threshold": 0.5,
+      "wandb_run": "https://forge.coreweave.com/wandb/jr613-d/aipi510-churn/runs/53b066to"
+    },
+    {
+      "name": "all_19-C0.1",
+      "feature_set": "all_19",
+      "input_count": 19,
+      "encoded_columns": 45,
+      "C": 0.1,
+      "roc_auc": 0.8530833034474514,
+      "precision": 0.6932773109243697,
+      "recall": 0.5871886120996441,
+      "threshold": 0.5,
+      "wandb_run": "https://forge.coreweave.com/wandb/jr613-d/aipi510-churn/runs/vomc07ct"
+    },
+    {
+      "name": "all_19-C1.0",
+      "feature_set": "all_19",
+      "input_count": 19,
+      "encoded_columns": 45,
+      "C": 1.0,
+      "roc_auc": 0.8532304339430052,
+      "precision": 0.6938775510204082,
+      "recall": 0.604982206405694,
+      "threshold": 0.5,
+      "wandb_run": "https://forge.coreweave.com/wandb/jr613-d/aipi510-churn/runs/s1yetbyu"
+    },
+    {
+      "name": "all_19-C10.0",
+      "feature_set": "all_19",
+      "input_count": 19,
+      "encoded_columns": 45,
+      "C": 10.0,
+      "roc_auc": 0.852913183811967,
+      "precision": 0.691358024691358,
+      "recall": 0.597864768683274,
+      "threshold": 0.5,
+      "wandb_run": "https://forge.coreweave.com/wandb/jr613-d/aipi510-churn/runs/x0q48zjc"
+    }
+  ]
+}

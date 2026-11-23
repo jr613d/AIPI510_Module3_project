@@ -96,7 +96,7 @@ def validation_metrics(pipeline, data, settings):
         "precision": float(precision_score(target, predicted, zero_division=0)),
         "recall": float(recall_score(target, predicted, zero_division=0)),
         "threshold": threshold,
-        "threshold_status": "provisional; not tuned or finalized",
+        "threshold_status": settings.get("threshold_status", "provisional; not tuned or finalized"),
         "confusion_matrix": {
             "true_negatives": int(tn), "false_positives": int(fp),
             "false_negatives": int(fn), "true_positives": int(tp),
