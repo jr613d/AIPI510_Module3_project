@@ -88,6 +88,21 @@ Offline runs are written under `wandb/` in the repository; `wandb/.gitignore`
 keeps them out of Git. Offline artifact files are staged in W&B's data
 directory until synced.
 
+## Model-selection runs
+
+Three more commands record runs in the same W&B project:
+
+| Command | W&B run(s) | Data scored |
+| --- | --- | --- |
+| `python -m src.experiments` | One run per C value × feature set, group `model-selection` | Validation |
+| `python -m src.thresholds` | `threshold-selection`: a table and a precision/recall chart | Validation |
+| `python -m src.evaluate` | `final-test`, with metrics under `test/` | Test, once |
+
+`log_training_run()` still refuses test results; the final test uses the
+separate `log_test_run()`, so test metrics are never labelled as validation
+metrics. `src/evaluate.py` refuses to run again once `reports/test_evaluation.json`
+exists.
+
 ## Checks
 
 ```bash

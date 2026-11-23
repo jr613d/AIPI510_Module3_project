@@ -1,0 +1,106 @@
+{
+  "evaluation_partition": "validation",
+  "test_evaluated": false,
+  "data_sha256": "3281639149f21b9ae68c21245c383b35afdd2705ad005f1bc5c20da416430c35",
+  "rows": [
+    {
+      "threshold": 0.2,
+      "flagged": 515,
+      "churners_caught": 241,
+      "false_alarms": 274,
+      "churners_missed": 40,
+      "precision": 0.4679611650485437,
+      "recall": 0.8576512455516014
+    },
+    {
+      "threshold": 0.25,
+      "flagged": 448,
+      "churners_caught": 230,
+      "false_alarms": 218,
+      "churners_missed": 51,
+      "precision": 0.5133928571428571,
+      "recall": 0.8185053380782918
+    },
+    {
+      "threshold": 0.3,
+      "flagged": 411,
+      "churners_caught": 222,
+      "false_alarms": 189,
+      "churners_missed": 59,
+      "precision": 0.5401459854014599,
+      "recall": 0.7900355871886121
+    },
+    {
+      "threshold": 0.35,
+      "flagged": 377,
+      "churners_caught": 216,
+      "false_alarms": 161,
+      "churners_missed": 65,
+      "precision": 0.5729442970822282,
+      "recall": 0.7686832740213523
+    },
+    {
+      "threshold": 0.4,
+      "flagged": 325,
+      "churners_caught": 197,
+      "false_alarms": 128,
+      "churners_missed": 84,
+      "precision": 0.6061538461538462,
+      "recall": 0.701067615658363
+    },
+    {
+      "threshold": 0.45,
+      "flagged": 272,
+      "churners_caught": 177,
+      "false_alarms": 95,
+      "churners_missed": 104,
+      "precision": 0.6507352941176471,
+      "recall": 0.6298932384341637
+    },
+    {
+      "threshold": 0.5,
+      "flagged": 231,
+      "churners_caught": 155,
+      "false_alarms": 76,
+      "churners_missed": 126,
+      "precision": 0.670995670995671,
+      "recall": 0.5516014234875445
+    },
+    {
+      "threshold": 0.55,
+      "flagged": 198,
+      "churners_caught": 134,
+      "false_alarms": 64,
+      "churners_missed": 147,
+      "precision": 0.6767676767676768,
+      "recall": 0.47686832740213525
+    },
+    {
+      "threshold": 0.6,
+      "flagged": 158,
+      "churners_caught": 114,
+      "false_alarms": 44,
+      "churners_missed": 167,
+      "precision": 0.7215189873417721,
+      "recall": 0.40569395017793597
+    },
+    {
+      "threshold": 0.65,
+      "flagged": 114,
+      "churners_caught": 84,
+      "false_alarms": 30,
+      "churners_missed": 197,
+      "precision": 0.7368421052631579,
+      "recall": 0.298932384341637
+    },
+    {
+      "threshold": 0.7,
+      "flagged": 68,
+      "churners_caught": 53,
+      "false_alarms": 15,
+      "churners_missed": 228,
+      "precision": 0.7794117647058824,
+      "recall": 0.18861209964412812
+    }
+  ]
+}

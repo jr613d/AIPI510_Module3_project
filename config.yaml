@@ -39,7 +39,8 @@ training:
   logistic_regression:
     C: 1.0
     max_iter: 1000
-  threshold: 0.5  # Provisional; not tuned or finalized.
+  threshold: 0.35  # Chosen by Jim from validation results (reports/threshold_selection.md)
+  threshold_status: selected on validation data
   model_path: artifacts/churn_pipeline.joblib
   validation_report: reports/training_validation.json
 
@@ -48,3 +49,34 @@ tracking:
   project: aipi510-churn
   entity: null  # null = the default workspace of your W&B login
   mode: online  # online | offline | disabled; override with --tracking-mode
+
+experiments:
+  # Model-selection runs, scored on VALIDATION data only (python -m src.experiments).
+  # Every combination of C value and feature set is trained and logged to W&B.
+  output_dir: artifacts/experiments  # Git-ignored; never overwrites training.model_path
+  C_values: [0.01, 0.1, 1.0, 10.0]
+  feature_sets:
+    eight_inputs:  # The current model's inputs (same as the training section)
+      numeric_features: [tenure, MonthlyCharges]
+      categorical_features: [Contract, InternetService, TechSupport, OnlineSecurity,
+                             PaymentMethod, PaperlessBilling]
+    all_19:  # Every column except customerID and the Churn target
+      numeric_features: [tenure, MonthlyCharges, TotalCharges, SeniorCitizen]
+      categorical_features: [gender, Partner, Dependents, PhoneService, MultipleLines,
+                             InternetService, OnlineSecurity, OnlineBackup, DeviceProtection,
+                             TechSupport, StreamingTV, StreamingMovies, Contract,
+                             PaperlessBilling, PaymentMethod]
+  summary_json: reports/experiments.json
+  summary_markdown: reports/experiments.md
+
+threshold_selection:
+  # Cutoffs compared on VALIDATION data for the chosen model (python -m src.thresholds).
+  candidates: [0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50, 0.55, 0.60, 0.65, 0.70]
+  summary_json: reports/threshold_selection.json
+  summary_markdown: reports/threshold_selection.md
+
+final_evaluation:
+  # One-time TEST-set evaluation of the final model (python -m src.evaluate).
+  # The script refuses to run again once this report exists.
+  summary_json: reports/test_evaluation.json
+  summary_markdown: reports/test_evaluation.md
