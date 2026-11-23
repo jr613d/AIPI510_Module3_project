@@ -225,3 +225,8 @@ __marimo__/
 # Recreated by src/ingest.py; summaries in reports/ are committed instead.
 data/raw/
 data/processed/
+data/cloud/
+
+# Local Google authentication belongs outside Git.
+application_default_credentials.json
+service-account*.json

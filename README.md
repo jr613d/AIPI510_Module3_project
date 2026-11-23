@@ -14,22 +14,26 @@ We will also report **precision** (of customers flagged as churning, how many ac
 
 Accuracy alone would be misleading: approximately 73.5% of customers in this sample stayed, so predicting `No` for everyone would appear 73.5% accurate while missing every customer who churned. These metrics will help us evaluate model behavior; the assignment emphasizes a reproducible production pipeline rather than achieving a particular score.
 
-## Current step: project setup and data ingestion
+## Current step: cloud storage
 
-Branch: `feat/setup-data-ingestion`.
+Branch: `feat/cloud-storage`.
 
-This step sets up Python, downloads the selected dataset, prepares a cleaned
-copy, and produces a data-quality summary. It does not split data, encode
-categories, train a model, create an API, or deploy cloud resources.
+Local ingestion is implemented. This step adds upload and verified download
+of the cleaned CSV using Google Cloud Storage. Jim sets up the bucket and
+uploads the file; the repository supplies configuration and transfer code.
+See the [cloud storage walkthrough](docs/CLOUD_STORAGE.md) for the next steps.
+The bucket address is configured. A real authenticated download on November
+23, 2026 matched the reviewed cleaned CSV's SHA-256 and retained all 7,043
+customers, 21 columns, and 11 missing charge values. Changes await Jim's review.
 
 ## Project map
 
-This is our agreed sequence of branches. Step 1 is implemented and pushed, ready for Jim's PR; all later steps are planned. We will choose the specific cloud services, model, tracking tool, and interface framework together when we reach those decisions.
+This is our agreed sequence of branches. Step 1 is merged into `main`; step 2 is implemented and verified with Google Cloud Storage, ready for PR review. Later steps are planned. We will choose the model, tracking tool, and interface framework together when we reach those decisions.
 
 | Step | Branch | Outcome |
 | --- | --- | --- |
 | 1 | `feat/setup-data-ingestion` | Project setup, dataset selection, problem definition, and reproducible local ingestion |
-| 2 | `feat/cloud-data-storage` | Store cleaned data in the cloud and download it programmatically |
+| 2 | `feat/cloud-storage` | GCS storage and verified programmatic download implemented; review pending |
 | 3 | `feat/training-pipeline` | Split data, preprocess, train a simple model, and evaluate using configuration-controlled settings |
 | 4 | `feat/experiment-tracking` | Record experiment parameters, metrics, and model artifacts |
 | 5 | `feat/prediction-api` | Build and test the `/predict` endpoint locally |
@@ -110,8 +114,9 @@ python -m pip install -r requirements.txt
 ```
 
 The virtual environment keeps project packages separate from other projects.
-The initial dependencies are pandas for tables, requests for downloading,
-and PyYAML for reading configuration. We will add ML packages when we reach
+The dependencies are pandas for tables, requests for downloading,
+PyYAML for reading configuration, and the Google Cloud Storage client for
+cloud transfers. We will add ML packages when we reach
 the training step.
 
 Download, clean, and check the data:
@@ -126,18 +131,22 @@ in the same folder is machine-readable evidence for later pipeline steps.
 
 ## Data and outputs
 
-Downloaded and cleaned CSVs stay local and are excluded from Git. We commit
-the download script, configuration, source attribution, and aggregate data
-summary so anyone can recreate and inspect the data.
+Raw, cleaned, and cloud-downloaded CSVs are excluded from Git. The cleaned
+CSV also lives in a private cloud bucket after Jim uploads it. We commit the
+scripts, configuration, source attribution, and aggregate data summary so
+others can recreate the local data; cloud access requires their own permission.
 
 ```text
 config.yaml                Source revision, checksum, and output paths
 requirements.txt           Initial Python dependencies
-src/                       Ingestion code
-tests/                     Checks for ingestion behavior
+src/ingest.py              Download, validate, and clean the original dataset
+src/storage.py             Upload/download cleaned CSV with SHA-256 verification
+tests/                     Offline ingestion and storage checks
 data/raw/                  Original CSV, unchanged and Git-ignored
 data/processed/            Cleaned CSV, Git-ignored
+data/cloud/                Verified cloud download, Git-ignored
 reports/                   Aggregate data-quality report, committed to Git
+docs/CLOUD_STORAGE.md       Cloud setup, authentication, and transfer walkthrough
 ```
 
 We retain the full dataset during ingestion. We will select model inputs
