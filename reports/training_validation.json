@@ -1,0 +1,138 @@
+{
+  "evaluation_partition": "validation",
+  "test_evaluated": false,
+  "target_mapping": {
+    "No": 0,
+    "Yes": 1
+  },
+  "processed_sha256": "3281639149f21b9ae68c21245c383b35afdd2705ad005f1bc5c20da416430c35",
+  "data_source": {
+    "uri": "gs://kangaroo_baseball_field/telco_churn.csv",
+    "path": "data/cloud/telco_churn.csv",
+    "sha256": "3281639149f21b9ae68c21245c383b35afdd2705ad005f1bc5c20da416430c35",
+    "expected_sha256": "3281639149f21b9ae68c21245c383b35afdd2705ad005f1bc5c20da416430c35"
+  },
+  "settings": {
+    "model": "logistic_regression",
+    "min_tenure_months": 1,
+    "random_state": 42,
+    "split": {
+      "train": 0.7,
+      "validation": 0.15,
+      "test": 0.15
+    },
+    "numeric_features": [
+      "tenure",
+      "MonthlyCharges"
+    ],
+    "categorical_features": [
+      "Contract",
+      "InternetService",
+      "TechSupport",
+      "OnlineSecurity",
+      "PaymentMethod",
+      "PaperlessBilling"
+    ],
+    "logistic_regression": {
+      "C": 1.0,
+      "max_iter": 1000
+    },
+    "threshold": 0.5,
+    "model_path": "artifacts/churn_pipeline.joblib",
+    "validation_report": "reports/training_validation.json"
+  },
+  "population": {
+    "input_rows": 7043,
+    "excluded_rows": 11,
+    "eligible_rows": 7032,
+    "min_tenure_months": 1,
+    "source": {
+      "uri": "gs://kangaroo_baseball_field/telco_churn.csv",
+      "path": "data/cloud/telco_churn.csv",
+      "sha256": "3281639149f21b9ae68c21245c383b35afdd2705ad005f1bc5c20da416430c35",
+      "expected_sha256": "3281639149f21b9ae68c21245c383b35afdd2705ad005f1bc5c20da416430c35"
+    },
+    "random_state": 42,
+    "splits": {
+      "train": {
+        "rows": 4922,
+        "churn_counts": {
+          "No": 3614,
+          "Yes": 1308
+        },
+        "churn_rate": 0.2657456318569687
+      },
+      "validation": {
+        "rows": 1055,
+        "churn_counts": {
+          "No": 774,
+          "Yes": 281
+        },
+        "churn_rate": 0.2663507109004739
+      },
+      "test": {
+        "rows": 1055,
+        "churn_counts": {
+          "No": 775,
+          "Yes": 280
+        },
+        "churn_rate": 0.26540284360189575
+      }
+    }
+  },
+  "input_features": [
+    "tenure",
+    "MonthlyCharges",
+    "Contract",
+    "InternetService",
+    "TechSupport",
+    "OnlineSecurity",
+    "PaymentMethod",
+    "PaperlessBilling"
+  ],
+  "encoded_feature_count": 20,
+  "encoded_feature_names": [
+    "numeric__tenure",
+    "numeric__MonthlyCharges",
+    "categorical__Contract_Month-to-month",
+    "categorical__Contract_One year",
+    "categorical__Contract_Two year",
+    "categorical__InternetService_DSL",
+    "categorical__InternetService_Fiber optic",
+    "categorical__InternetService_No",
+    "categorical__TechSupport_No",
+    "categorical__TechSupport_No internet service",
+    "categorical__TechSupport_Yes",
+    "categorical__OnlineSecurity_No",
+    "categorical__OnlineSecurity_No internet service",
+    "categorical__OnlineSecurity_Yes",
+    "categorical__PaymentMethod_Bank transfer (automatic)",
+    "categorical__PaymentMethod_Credit card (automatic)",
+    "categorical__PaymentMethod_Electronic check",
+    "categorical__PaymentMethod_Mailed check",
+    "categorical__PaperlessBilling_No",
+    "categorical__PaperlessBilling_Yes"
+  ],
+  "metrics": {
+    "roc_auc": 0.8488464049582978,
+    "precision": 0.670995670995671,
+    "recall": 0.5516014234875445,
+    "threshold": 0.5,
+    "threshold_status": "provisional; not tuned or finalized",
+    "confusion_matrix": {
+      "true_negatives": 698,
+      "false_positives": 76,
+      "false_negatives": 126,
+      "true_positives": 155
+    }
+  },
+  "versions": {
+    "python": "3.13.18",
+    "pandas": "2.3.3",
+    "numpy": "2.2.6",
+    "scipy": "1.15.3",
+    "scikit-learn": "1.7.2",
+    "joblib": "1.6.0",
+    "google-cloud-storage": "3.17.1"
+  }
+}
