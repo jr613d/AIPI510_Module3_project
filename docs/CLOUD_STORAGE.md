@@ -14,8 +14,9 @@ HF source → src/ingest.py → data/processed/telco_churn.csv
                             data/cloud/telco_churn.csv
 ```
 
-Later, the training step will call the download function and use its returned
-path. This branch implements transfers only; no model is trained yet.
+The training pipeline now calls this download function and uses the verified
+cloud bytes for preprocessing and training. Transfers preserve all 7,043 rows;
+the tenure eligibility rule is applied separately in model preprocessing.
 
 ## 1. Jim creates the bucket and uploads the cleaned file
 
@@ -112,16 +113,17 @@ cover both. See [Google's role definitions](https://docs.cloud.google.com/storag
 
 ## 4. Install dependencies and verify a real download
 
-Run commands from the checkout containing `feat/cloud-storage`. On Jim's Mac:
+Run commands from a repository checkout containing the merged storage code. On Jim's Mac, the current training checkout is:
 
 ```bash
-cd /Users/jim/dukeaipi/510_Sourcing_Data/Module_3_project/AIPI510_Module3_cloud_storage
+cd /Users/jim/dukeaipi/510_Sourcing_Data/Module_3_project/AIPI510_Module3_project
 ```
 
-For a fresh clone or worktree, first create its own environment:
+The project now targets Python 3.13. For a fresh clone or worktree with
+Python 3.13 installed, first create its own environment:
 
 ```bash
-python3 -m venv .venv
+python3.13 -m venv .venv
 ```
 
 Activate it, install dependencies, and download:
@@ -183,10 +185,10 @@ byte preservation, wrong-file rejection, authentication/access failures,
 atomic saving, and upload replacement protection. Passing them does not
 prove that Google credentials, permissions, or the bucket are configured.
 
-The project's existing Python 3.10 environment runs these checks, but Google's
-SDK now emits a Python 3.10 support warning. Review a supported Python upgrade
-with Jim before changing the agreed project environment; the warning is not
-an authentication failure.
+The original cloud-branch checks ran under Python 3.10 and emitted Google's
+Python support warning. During the training branch, Jim approved Python 3.13
+as the project target. Use the Python 3.13 environment described in the README;
+do not reuse the old Python 3.10 virtual environment for new setup.
 
 On November 23, 2026, Codex ran `python -m src.storage download` against Jim's
 configured bucket using his local ADC login. The real download succeeded:
