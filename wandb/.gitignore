@@ -1,0 +1,3 @@
+# Offline runs and SDK logs stay local. Keep only this ignore rule in Git.
+*
+!.gitignore

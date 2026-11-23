@@ -1,7 +1,7 @@
 # Project collaboration instructions
 
-- This is Jim's solo student project. Codex is his AI coding and learning assistant, not a second student or project partner. Do not impose partner-specific contribution requirements.
-- Jim makes project decisions and reviews the work; Codex helps with implementation, testing, and explanations. Document AI assistance honestly.
+- This is Jim's solo student project. The AI assistant is his coding and learning assistant, not a second student or project partner. Do not impose partner-specific contribution requirements.
+- Jim makes project decisions and reviews the work; the AI assistant helps with implementation, testing, and explanations. Document AI assistance honestly.
 - Work in this cloned repository, not the sibling `churn_predictor` draft.
 - Jim wants to learn the project step by step. Explain what you are doing
   and why; pause for material decisions and answer questions along the way.

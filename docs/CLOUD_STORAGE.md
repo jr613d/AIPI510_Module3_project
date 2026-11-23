@@ -190,7 +190,7 @@ Python support warning. During the training branch, Jim approved Python 3.13
 as the project target. Use the Python 3.13 environment described in the README;
 do not reuse the old Python 3.10 virtual environment for new setup.
 
-On November 23, 2026, Codex ran `python -m src.storage download` against Jim's
+On November 23, 2026, the AI assistant ran `python -m src.storage download` against Jim's
 configured bucket using his local ADC login. The real download succeeded:
 
 - 971,878 bytes, matching SHA-256

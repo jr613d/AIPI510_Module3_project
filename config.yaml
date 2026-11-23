@@ -42,3 +42,9 @@ training:
   threshold: 0.5  # Provisional; not tuned or finalized.
   model_path: artifacts/churn_pipeline.joblib
   validation_report: reports/training_validation.json
+
+tracking:
+  # Weights & Biases experiment tracking. The API key stays outside Git (run `wandb login`).
+  project: aipi510-churn
+  entity: null  # null = the default workspace of your W&B login
+  mode: online  # online | offline | disabled; override with --tracking-mode
