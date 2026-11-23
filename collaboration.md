@@ -46,6 +46,7 @@ Codex initially moved too quickly and drafted a larger application outside the r
 - Confirmed that he understood the work presented and authorized the first commit and push.
 - Requested this ongoing collaboration log and a chance to review its first draft before committing it.
 - Asked whether an evaluation metric had been defined, reviewed the explanation, and approved ROC AUC as the primary metric with precision and recall as supporting metrics.
+- Requested a persistent project map, approved the nine-step branch sequence, and authorized saving, committing, and pushing it on the current branch for inclusion in the PR.
 
 ### What Codex contributed
 
@@ -60,6 +61,7 @@ Codex initially moved too quickly and drafted a larger application outside the r
 - Created and pushed the approved implementation commit, leaving `main` unchanged.
 - Drafted this log for Jim's review.
 - Explained the evaluation metrics and the limitations of accuracy for this dataset, then documented the approved evaluation plan in the README's project overview.
+- Saved the agreed project map in the README and linked it from `AGENTS.md`, including the rule to start each later branch from updated `main` after Jim merges the preceding PR.
 
 ### Verification and limits
 

@@ -9,6 +9,8 @@
   experiment tracking, API, interface, Docker, or deployment work early.
 - Use a separate branch for each agreed step. The first branch combines
   project setup and data ingestion: `feat/setup-data-ingestion`.
+- Follow the branch sequence and scope in the [README project map](README.md#project-map). Keep its status current and record assistance in `collaboration.md`. Discuss changes to the plan with Jim before implementing them.
+- After Jim merges a PR, update local `main` from GitHub and create the next agreed branch from that updated `main`. Create branches only when their step begins.
 - Before a commit, summarize the changes and validation and give Jim the
   opportunity to review. Then use focused commits and a PR into `main`.
 - Jim reviews and merges PRs; wait until he is ready for the next step.

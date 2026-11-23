@@ -22,6 +22,26 @@ This step sets up Python, downloads the selected dataset, prepares a cleaned
 copy, and produces a data-quality summary. It does not split data, encode
 categories, train a model, create an API, or deploy cloud resources.
 
+## Project map
+
+This is our agreed sequence of branches. Step 1 is implemented and pushed, ready for Jim's PR; all later steps are planned. We will choose the specific cloud services, model, tracking tool, and interface framework together when we reach those decisions.
+
+| Step | Branch | Outcome |
+| --- | --- | --- |
+| 1 | `feat/setup-data-ingestion` | Project setup, dataset selection, problem definition, and reproducible local ingestion |
+| 2 | `feat/cloud-data-storage` | Store cleaned data in the cloud and download it programmatically |
+| 3 | `feat/training-pipeline` | Split data, preprocess, train a simple model, and evaluate using configuration-controlled settings |
+| 4 | `feat/experiment-tracking` | Record experiment parameters, metrics, and model artifacts |
+| 5 | `feat/prediction-api` | Build and test the `/predict` endpoint locally |
+| 6 | `feat/docker` | Package and run training and serving in Docker |
+| 7 | `feat/api-deployment` | Deploy and verify the public API |
+| 8 | `feat/frontend` | Build and deploy an interface that calls the API |
+| 9 | `docs/final-review` | Finish usage and deployment instructions, limitations, and collaboration reflections |
+
+Each step follows: **branch → implementation and explanation → review → commit and push → PR → Jim's merge**. After a PR is merged, update local `main` from GitHub and create the next branch from that updated `main` so it inherits the completed work and this map. We create branches as each step begins, rather than creating all branches in advance.
+
+Update this map's status and [collaboration log](collaboration.md) as each step progresses. Jim decides when to begin the next step and approves any changes to the plan.
+
 ## Dataset
 
 We use [scikit-learn/churn-prediction on Hugging Face](https://huggingface.co/datasets/scikit-learn/churn-prediction),
