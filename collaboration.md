@@ -81,7 +81,7 @@ Topics discussed included raw versus cleaned data, numeric versus categorical fi
 
 - **Branch:** `feat/cloud-storage`
 - **Date and goal:** November 23, 2026. Store the prepared CSV in Google Cloud Storage and retrieve the same bytes programmatically.
-- **Status:** Implementation, offline checks, and a real authenticated cloud download passed. Jim reviewed the explanation and walkthrough and agreed to proceed with the commit and PR; his PR review and merge remain pending. Jim created the bucket, uploaded the CSV, installed the SDK, and completed local login. Codex verified the retrieved bytes; no cloud resources were created by Codex.
+- **Status:** Implementation, offline checks, and a real authenticated cloud download passed. Jim reviewed the explanation and walkthrough and agreed to proceed. Codex committed and pushed the storage implementation as [`652e634`](https://github.com/jr613d/AIPI510_Module3_project/commit/652e634) and opened [PR #2](https://github.com/jr613d/AIPI510_Module3_project/pull/2) into `main`; Jim's PR review and merge remain pending. Jim created the bucket, uploaded the CSV, installed the SDK, and completed local login. Codex verified the retrieved bytes; no cloud resources were created by Codex.
 
 ### Jim's decisions and questions
 
