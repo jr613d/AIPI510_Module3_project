@@ -1,6 +1,7 @@
 """Train the agreed eight-input classifier and evaluate validation data only.
 
-Run: python -m src.train
+Run: python -m src.train [--tracking-mode online|offline|disabled]
+After training succeeds, results are recorded in Weights & Biases.
 The test partition is reserved for evaluation after the approach is finalized.
 """
 
@@ -26,6 +27,7 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 from src.ingest import EXPECTED_COLUMNS, ROOT, load_config
 from src.preprocess import prepare_splits
+from src.tracking import MODES, log_training_run, tracking_settings
 
 
 def feature_names(settings):
@@ -149,14 +151,34 @@ def train(config_path=ROOT / "config.yaml"):
     return pipeline, report
 
 
-if __name__ == "__main__":
+def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, default=ROOT / "config.yaml")
-    args = parser.parse_args()
+    parser.add_argument("--tracking-mode", choices=MODES,
+                        help="Override tracking.mode in config.yaml for this run.")
+    args = parser.parse_args(argv)
     try:
+        # Check tracking settings first so a typo does not waste a training run.
+        config, _ = load_config(args.config)
+        tracking = tracking_settings(config, args.tracking_mode)
         _, report = train(args.config)
     except (ValueError, KeyError, OSError, ConvergenceWarning,
             GoogleAPIError, GoogleAuthError, DataCorruption) as error:
         parser.exit(1, f"Training failed: {error}\n")
     print(json.dumps({"encoded_features": report["encoded_feature_count"],
                       "validation": report["metrics"], "test_evaluated": False}, indent=2))
+    if tracking["mode"] == "disabled":
+        print("W&B tracking disabled; nothing recorded.")
+        return
+    try:
+        result = log_training_run(
+            report, ROOT / report["settings"]["model_path"],
+            project=tracking["project"], entity=tracking["entity"], mode=tracking["mode"],
+        )
+    except Exception as error:  # Any SDK/network failure: never report the run as tracked.
+        parser.exit(1, f"Training outputs were saved, but W&B tracking failed: {error}\n")
+    print(f"W&B {result['mode']} run recorded: {result['url'] or result['run_dir']}")
+
+
+if __name__ == "__main__":
+    main()
