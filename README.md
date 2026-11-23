@@ -14,17 +14,40 @@ We will also report **precision** (of customers flagged as churning, how many ac
 
 Accuracy alone would be misleading: approximately 73.5% of customers in this sample stayed, so predicting `No` for everyone would appear 73.5% accurate while missing every customer who churned. These metrics will help us evaluate model behavior; the assignment emphasizes a reproducible production pipeline rather than achieving a particular score.
 
-## Current step: experiment tracking
+## Current step: model selection and final evaluation
 
-Branch: `feat/experiment-tracking`.
+Branch: `feat/model-selection`.
 
-Project setup, cloud storage, and the training pipeline were merged in PRs #1–#3. This step records every training run in **Weights & Biases (W&B)**: the training settings, validation metrics, data fingerprint, Git commit, and a versioned copy of the fitted model. After a one-time `wandb login`, `python -m src.train` uploads a run to the `aipi510-churn` W&B project automatically. `--tracking-mode offline` saves the run locally instead, and `--tracking-mode disabled` skips W&B. See the [experiment tracking guide](docs/EXPERIMENT_TRACKING.md) for setup, what is recorded, and verification.
+Experiment tracking was merged in PR #4. In this step we used W&B to compare model versions on **validation data**, chose the final model, and then scored it **once** on the held-out test data.
+
+**1. Experiments** (`python -m src.experiments`, results in [reports/experiments.md](reports/experiments.md)). We trained 8 versions: the 8-input model and an all-19-input model, each with regularization strength `C` = 0.01, 0.1, 1, and 10. Validation ROC AUC ranged only from 0.8487 to 0.8532. Changing `C` made no meaningful difference, and all 19 inputs scored about 0.004 higher than 8, which is within the random variation expected for about 1,000 validation customers. Jim kept the **8-input model with `C = 1.0`**. It is simpler to explain, needs a shorter input form, and leaves out gender and other demographic inputs.
+
+**2. Threshold** (`python -m src.thresholds`, results in [reports/threshold_selection.md](reports/threshold_selection.md)). The model outputs a churn probability, and the threshold decides when that counts as a predicted churner. We compared cutoffs from 0.20 to 0.70 on validation data. Jim chose **0.35**, which had the best balance of precision and recall (highest F1). Compared with 0.50, it catches 216 instead of 155 of the 281 validation churners, at the cost of 161 instead of 76 false alarms. This assumes that missing a customer who leaves costs more than an unnecessary retention contact; the dataset contains no real costs to confirm that.
+
+**3. Final test** (`python -m src.evaluate`, results in [reports/test_evaluation.md](reports/test_evaluation.md)). After the choices above were committed, the final model was retrained and scored once on 1,055 test customers that were never used for training or for any choice:
+
+| Final test result | Value |
+| --- | ---: |
+| ROC AUC | **0.8192** |
+| Threshold | 0.35 |
+| Precision | 52.7% |
+| Recall | 68.9% |
+| Churners caught | 193 of 280 |
+| False alarms | 173 |
+
+Test results are a little lower than validation (ROC AUC 0.849, precision 57.3%, recall 76.9%). This is expected: the validation data was used to make choices, so its scores are slightly optimistic, and with about 280 churners per group, scores vary by a few points by chance. The model was not adjusted after seeing the test results. `src/evaluate.py` refuses to run again once the test report exists, so the test set stays a one-time check.
+
+All runs are in the W&B project `aipi510-churn`: the 8 experiments and the threshold comparison (group `model-selection`), the final training run, and the `final-test` run.
+
+## Experiment tracking
+
+Merged in PR #4. Every training run is recorded in **Weights & Biases (W&B)** with the training settings, validation metrics, data fingerprint, Git commit, and a versioned copy of the fitted model. After a one-time `wandb login`, `python -m src.train` uploads a run to the `aipi510-churn` W&B project automatically. `--tracking-mode offline` saves the run locally instead, and `--tracking-mode disabled` skips W&B. See the [experiment tracking guide](docs/EXPERIMENT_TRACKING.md) for setup, what is recorded, and verification.
 
 ## Training pipeline
 
 Merged in PR #3. The training pipeline uses **logistic regression**, selected by Jim. It predicts the probability of `Churn = Yes`; ROC AUC remains our primary evaluation metric. The model choice is recorded in `config.yaml`.
 
-The initial eight-input model has been trained and evaluated on validation data. The fitted preprocessing and classifier are saved together locally. The classification threshold is provisional and the test set has not been evaluated. Training now calls `storage.download()` to fetch the configured cloud CSV and verify its fingerprint before filtering, splitting, encoding, and fitting. It does not read or fall back to the local processed CSV. Serving and deployment remain later steps.
+The initial eight-input model has been trained and evaluated on validation data. The fitted preprocessing and classifier are saved together locally. The classification threshold (0.35) and the final test evaluation are described under the current step above. Training now calls `storage.download()` to fetch the configured cloud CSV and verify its fingerprint before filtering, splitting, encoding, and fitting. It does not read or fall back to the local processed CSV. Serving and deployment remain later steps.
 
 **Modeling population:** Jim chose to require at least one month of tenure (`training.min_tenure_months: 1`) before splitting. In the current dataset this excludes 11 zero-tenure records, all with missing `TotalCharges` and `Churn = No`, leaving 7,032 records (1,869 `Yes`, 5,163 `No`) with no missing `TotalCharges`. This is an eligibility rule for this project; the data does not establish that zero-tenure records are prospects or cannot churn. The raw and cleaned CSVs retain all 7,043 rows. Median imputation was proposed but not adopted. The filter is implemented in `src/preprocess.py` and runs in memory, separately from ingestion and cleaning. Missing totals among eligible customers cause an error for review rather than silent imputation or exclusion.
 
@@ -72,9 +95,9 @@ python -m unittest discover -s tests -v
 
 Optional `--config <path>` arguments are supported by preprocessing and training. Inputs, split proportions, seed, regularization strength, iteration limit, provisional threshold, and output paths are controlled by `config.yaml`.
 
-Outputs are a local Git-ignored fitted pipeline at `artifacts/churn_pipeline.joblib` and an aggregate [validation report](reports/training_validation.json). Both record the cloud source URI, download path, and checksum of the exact in-memory CSV bytes used for splitting and training. The report also records configuration, environment versions, partition counts, encoded column names, and validation metrics. The saved artifact contains the scaler, encoder, classifier, and settings. It can be recreated from the cloud data and configuration; the report is suitable for committing, while fitted artifacts remain local. Each successful run is also recorded in Weights & Biases (see the current step above).
+Outputs are a local Git-ignored fitted pipeline at `artifacts/churn_pipeline.joblib` and an aggregate [validation report](reports/training_validation.json). Both record the cloud source URI, download path, and checksum of the exact in-memory CSV bytes used for splitting and training. The report also records configuration, environment versions, partition counts, encoded column names, and validation metrics. The saved artifact contains the scaler, encoder, classifier, and settings. It can be recreated from the cloud data and configuration; the report is suitable for committing, while fitted artifacts remain local. Each successful run is also recorded in Weights & Biases (see Experiment tracking above).
 
-| Initial validation result | Value |
+| Initial validation result (before threshold selection) | Value |
 | --- | ---: |
 | ROC AUC | 0.8488 |
 | Precision at provisional cutoff 0.5 | 67.10% |
@@ -84,20 +107,21 @@ Outputs are a local Git-ignored fitted pipeline at `artifacts/churn_pipeline.job
 | Actual churners missed | 126 |
 | Customers who stayed and were not flagged | 698 |
 
-These results describe 1,055 validation customers, not final test performance. The threshold has not been tuned or finalized, no feature-set comparison was performed, and no test predictions or test metrics have been produced. Jim chose to merge the training pipeline with the provisional threshold and handle threshold selection (on validation data) and the one-time test evaluation as a small follow-up, before final evaluation is reported. The dataset remains a fictional teaching sample and the model applies to the project's tenure-eligible population.
+These were the first validation results, at the provisional 0.5 cutoff used before threshold selection. The final model uses threshold 0.35; see the current step above for the experiments, threshold choice, and final test result. The dataset remains a fictional teaching sample and the model applies to the project's tenure-eligible population.
 
-The full suite of 55 offline tests passes under Python 3.13 (11 ingestion, 11 cloud-storage, 12 preprocessing, 6 training, 15 experiment tracking), along with `pip check`. The tests include train-only scales and category vocabulary, unseen categories, ID/target exclusion, missing-input rejection, saved-model reloading, convergence failure, and no test-partition access by the training routine. Cloud tests use mocked transfers. Separately, a live run of `python -m src.train` under Python 3.13 downloaded and verified the cloud CSV and reproduced the validation results below exactly.
+The full suite of 69 offline tests passes under Python 3.13 (11 ingestion, 11 cloud-storage, 12 preprocessing, 6 training, 15 experiment tracking, 5 experiments, 5 threshold selection, 4 final evaluation), along with `pip check`. The tests include train-only scales and category vocabulary, unseen categories, ID/target exclusion, missing-input rejection, saved-model reloading, convergence failure, and no test-partition access by the training routine. Cloud tests use mocked transfers. Separately, a live run of `python -m src.train` under Python 3.13 downloaded and verified the cloud CSV and reproduced the validation results below exactly.
 
 ## Project map
 
-This is our agreed project map. Steps 1–3 are merged into `main` through PRs #1–#3. Experiment tracking (step 4) is in progress with Weights & Biases. The training model is logistic regression; remaining technology choices will be made together at the relevant step. All later steps are planned.
+This is our agreed project map. Steps 1–4 are merged into `main` through PRs #1–#4. Jim added step 4b (model selection and the one-time test evaluation) after experiment tracking; it is in progress. The training model is logistic regression; remaining technology choices will be made together at the relevant step. All later steps are planned.
 
 | Step | Branch | Outcome |
 | --- | --- | --- |
 | 1 | `feat/setup-data-ingestion` | Project setup, dataset selection, problem definition, and reproducible local ingestion |
 | 2 | `feat/cloud-storage` | GCS storage and verified programmatic download implemented; merged in PR #2 |
 | 3 | `feat/training-pipeline` | Split data, preprocess, train a simple model, and evaluate using configuration-controlled settings; merged in PR #3 |
-| 4 | `feat/experiment-tracking` | Record experiment parameters, metrics, and model artifacts in Weights & Biases; in progress |
+| 4 | `feat/experiment-tracking` | Record experiment parameters, metrics, and model artifacts in Weights & Biases; merged in PR #4 |
+| 4b | `feat/model-selection` | Compare model versions in W&B, choose the threshold on validation data, and score the test set once; in progress |
 | 5 | `feat/prediction-api` | Build and test the `/predict` endpoint locally |
 | 6 | `feat/docker` | Package and run training and serving in Docker |
 | 7 | `feat/api-deployment` | Deploy and verify the public API |
@@ -203,12 +227,13 @@ others can recreate the local data; cloud access requires their own permission.
 ```text
 config.yaml                Source revision, checksum, and output paths
 requirements.txt           Initial Python dependencies
-src/                       Ingestion, cloud transfers, preprocessing, training, and W&B tracking
+src/                       Ingestion, cloud transfers, preprocessing, training, W&B tracking,
+                           experiments, threshold selection, and final evaluation
 tests/                     Offline ingestion, storage, preprocessing, training, and tracking checks
 data/raw/                  Original CSV, unchanged and Git-ignored
 data/processed/            Cleaned CSV, Git-ignored
 data/cloud/                Verified cloud download, Git-ignored
-reports/                   Aggregate data-quality and validation reports
+reports/                   Aggregate data-quality, validation, experiment, threshold, and test reports
 docs/CLOUD_STORAGE.md       Cloud setup, authentication, and transfer walkthrough
 docs/EXPERIMENT_TRACKING.md W&B setup, usage, and verification
 wandb/                     Local W&B run files, Git-ignored
