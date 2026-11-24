@@ -209,7 +209,7 @@ with Jim and explain the code through a verified file transfer before moving on.
 - **Trying it in the browser:** Jim's first attempt to open the docs page failed for two reasons. The server was not running, and port 8000 was occupied by the front-end agent's mock API, which has no docs page. The AI assistant explained this, ran the real API on port 8001, and added a note on ports to the README.
 - **Status:** Jim reviewed the API in the browser and authorized a commit and push. The PR is next.
 
-## Branch 6: Docker — in progress
+## Branch 6: Docker — merged in PR #8
 
 - **Date and goal:** November 23, 2026. Package the project in one Docker image with entry points for serving and training, built and run locally.
 - **Jim's decisions:** Approved one image with `serve`, `train`, and `test` commands, and building the trained model into the image. The build fails if the model is missing or mismatched. Credentials are connected only at run time for training and are never stored in the image. Jim installed Docker Desktop himself.
@@ -228,7 +228,18 @@ with Jim and explain the code through a verified file transfer before moving on.
   - Jim first had to reload his shell profile so the terminal could find the `docker` command.
 
   The AI assistant rebuilt the image with that model. The image's recorded model SHA-256 (`5c1ddc44…`) matches the file the run produced, and the rebuilt image served the same predictions.
-- **Status:** Jim reviewed the results and authorized a commit and push. The PR is next.
+- **Reproducibility without Jim's credentials:**
+  - Jim asked what the image contains, and how his professor could retrain from it without his Google or W&B logins.
+  - The AI assistant explained that the image holds addresses (bucket, file, W&B project) but no keys. Serving needs no credentials, but retraining would fail on the private bucket.
+  - It offered three ways to get the data (grant the grader read access, make the file public, or let them use their own bucket), plus options for W&B.
+  - **Jim's decisions:** make the data file publicly readable, with an anonymous-download fallback, and document the own-bucket route for full independence. Make the W&B project public and view-only, and link it. Document `--tracking-mode disabled` and "use your own W&B login" for retraining.
+  - **AI assistance:** Added the anonymous fallback to `src/storage.py`. It is used only for downloads when no Google login exists, the checksum check still applies, and a private file produces a clear explanation. Added 4 storage tests and wrote the README section "Reproducing without author credentials".
+  - **W&B result:** Jim made the W&B project public. The AI assistant confirmed with an anonymous query that it is readable without a login (14 runs).
+  - **Bucket result:** Jim changed the bucket's permissions, but anonymous requests were still refused after several minutes. The AI assistant listed likely causes, including an organization policy blocking public sharing. Jim decided not to pursue it, because the data is reproducible from the sourcing and download scripts.
+  - **Final state:** The bucket is treated as private, and the README documents the own-bucket route. The anonymous fallback stays: it still checks the checksum, and for a private file it gives a clear explanation pointing to that route instead of Google's generic credentials error.
+  - **Verification:** 86 tests pass. In the container with no credentials, `train` tried the anonymous download and stopped with the "not publicly readable" message.
+- **Status:** Docker merged in PR #8. The reproducibility follow-up (anonymous fallback and README section) was finished after that merge, so it goes in its own small PR.
+
 ## Branch 8: Front-end (Streamlit) — in progress
 
 - **Branch:** `feat/frontend`, in the `AIPI510_Module3_cloud_storage` worktree, created from `main` at merge commit `e18cbaf` (PR #5).

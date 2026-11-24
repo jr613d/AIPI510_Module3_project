@@ -23,6 +23,10 @@ the tenure eligibility rule is applied separately in model preprocessing.
 In your Google Cloud project, create a private Cloud Storage bucket. Keep
 public access prevention enabled and use uniform bucket-level access.
 You do not need to make this dataset publicly readable for the assignment.
+Others reproduce training by recreating the identical file and uploading it
+to their own bucket; see the README section "Reproducing without author
+credentials". Downloads without a Google login try anonymous access, which
+works only for a public file, and are still checksum-verified.
 
 Upload **`data/processed/telco_churn.csv`**, not the original in `data/raw/`.
 Upload the file unchanged rather than opening and resaving it in a spreadsheet.

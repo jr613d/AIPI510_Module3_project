@@ -91,6 +91,38 @@ docker run --rm \
 
 Docker Desktop on an Apple-silicon Mac builds ARM images by default. Cloud Run runs on x86 (amd64), so deployment (step 7) builds the image for that platform.
 
+## Reproducing without author credentials
+
+The repository and Docker image contain **addresses but no keys**. `config.yaml` names the Google Cloud project, bucket, file, and expected checksum, and the W&B project, but no login of Jim's is stored anywhere. What someone else can do:
+
+| Goal | What they need |
+| --- | --- |
+| Use the deployed API or the front end | Nothing |
+| Serve the model locally | Docker only: `docker build -t churn-predictor .` then `docker run --rm -p 8001:8080 churn-predictor` |
+| Run the tests | Docker only: `docker run --rm churn-predictor test` |
+| See Jim's tracked runs | A browser: [W&B project `jr613-d/aipi510-churn`](https://forge.coreweave.com/wandb/jr613-d/aipi510-churn) (public, view-only) |
+| Retrain the model | Their own copy of the data (below); their own W&B login is optional |
+
+### Getting the data
+
+Jim's bucket is **private**, so others cannot download from it. Making the file public was planned, but the setting did not take effect in Jim's Google Cloud project, so Jim chose to rely on the data-sourcing scripts instead. The pipeline recreates the exact same data from its public source, with no access to Jim's resources:
+
+1. Run `python src/ingest.py`. It downloads the pinned Hugging Face file and produces the identical cleaned CSV, verified by checksum.
+2. Upload `data/processed/telco_churn.csv` unchanged to a bucket you own.
+3. Change `storage.project` and `storage.bucket` (and `storage.object` if needed) in `config.yaml`. Leave `expected_sha256` unchanged.
+4. Log in with `gcloud auth application-default login` and train (for example `python -m src.train --tracking-mode disabled`, or the Docker `train` command with your own login file connected).
+
+Because `expected_sha256` is unchanged, training verifies that the data in your bucket is byte-for-byte the data Jim used. The same split seed then reproduces the same partitions and validation results. See the [cloud storage walkthrough](docs/CLOUD_STORAGE.md) for details.
+
+If no Google login is found, the download tries anonymous access, which would work for a publicly readable file. For Jim's private bucket, it stops with a message explaining that the file is not public and pointing to these steps. Uploads always require a login.
+
+### Recording runs in W&B
+
+No one can write to Jim's W&B workspace without an invitation. Retraining offers two choices:
+
+- **Skip tracking:** add `--tracking-mode disabled`. Training, the model file, and the validation report work the same; nothing is recorded.
+- **Use your own W&B account:** run `wandb login` with your own account and train normally. Because `tracking.entity` is blank in `config.yaml`, runs go to an `aipi510-churn` project in *your* default workspace, with no config changes. In Docker, connect your login with `-v "$HOME/.netrc:/home/app/.netrc:ro"` (see the Docker section).
+
 ## Prediction API
 
 Branch: `feat/prediction-api` (step 5), merged in PR #6. The API serves the final model with [FastAPI](https://fastapi.tiangolo.com/) and the uvicorn web server. It loads the saved model once at startup and answers each request in milliseconds; it never trains, reads the dataset, or touches the test set.
