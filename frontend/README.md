@@ -120,6 +120,19 @@ API_URL=http://127.0.0.1:8012 frontend/.venv/bin/streamlit run frontend/app.py
 
 ## Deployment
 
-Planned: Streamlit Community Cloud, with `frontend/app.py` as the entry point and
-the deployed API's address in the app's `API_URL` secret. Deployment
-instructions and the public link will be added when the API is live.
+The app is live at **https://aipi510module3project-churn.streamlit.app/** on Streamlit Community Cloud, calling the API at
+`https://churn-api-161834179213.us-east1.run.app`.
+
+To deploy your own copy, sign in at [share.streamlit.io](https://share.streamlit.io) with
+GitHub and create an app from the repository with branch `main`, main file path
+`frontend/app.py`, and Python 3.13. Streamlit installs `frontend/requirements.txt`
+(next to the main file). Under **Advanced settings → Secrets**, set the API address
+(no trailing slash):
+
+```toml
+API_URL = "https://churn-api-161834179213.us-east1.run.app"
+```
+
+The app redeploys when `main` changes. If the sidebar says the service is not
+responding, wait a few seconds: Cloud Run starts the API on the first request after
+a quiet period.
