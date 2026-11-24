@@ -1,0 +1,15 @@
+# Allow-list: send Docker only what the image needs. Everything else
+# (data CSVs, virtual environments, .git, W&B output, credentials) stays out.
+*
+!requirements.txt
+!config.yaml
+!docker-entrypoint.sh
+!src/
+!tests/
+!reports/
+!artifacts/churn_pipeline.joblib
+
+# Never include caches, even inside allowed folders.
+**/__pycache__
+**/*.pyc
+**/.DS_Store
