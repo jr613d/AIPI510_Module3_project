@@ -14,11 +14,9 @@ We will also report **precision** (of customers flagged as churning, how many ac
 
 Accuracy alone would be misleading: approximately 73.5% of customers in this sample stayed, so predicting `No` for everyone would appear 73.5% accurate while missing every customer who churned. These metrics will help us evaluate model behavior; the assignment emphasizes a reproducible production pipeline rather than achieving a particular score.
 
-## Current step: model selection and final evaluation
+## Model selection and final evaluation
 
-Branch: `feat/model-selection`.
-
-Experiment tracking was merged in PR #4. In this step we used W&B to compare model versions on **validation data**, chose the final model, and then scored it **once** on the held-out test data.
+Merged in PR #5 (branch `feat/model-selection`). In this step we used W&B to compare model versions on **validation data**, chose the final model, and then scored it **once** on the held-out test data.
 
 **1. Experiments** (`python -m src.experiments`, results in [reports/experiments.md](reports/experiments.md)). We trained 8 versions: the 8-input model and an all-19-input model, each with regularization strength `C` = 0.01, 0.1, 1, and 10. Validation ROC AUC ranged only from 0.8487 to 0.8532. Changing `C` made no meaningful difference, and all 19 inputs scored about 0.004 higher than 8, which is within the random variation expected for about 1,000 validation customers. Jim kept the **8-input model with `C = 1.0`**. It is simpler to explain, needs a shorter input form, and leaves out gender and other demographic inputs.
 
@@ -39,9 +37,63 @@ Test results are a little lower than validation (ROC AUC 0.849, precision 57.3%,
 
 All runs are in the W&B project `aipi510-churn`: the 8 experiments and the threshold comparison (group `model-selection`), the final training run, and the `final-test` run.
 
+## Docker
+
+Branch: `feat/docker` (step 6), in progress. One image runs the whole project through three entry points: `serve` (the default), `train`, and `test`. It uses the official `python:3.13.18-slim` base, installs `requirements.txt`, and runs as an ordinary user rather than root. Install [Docker Desktop](https://www.docker.com/products/docker-desktop/) and start it before running these commands.
+
+### Workflow: train → build → run
+
+The trained model is **built into the image**, so the image serves without downloading anything or needing any login. The build copies `artifacts/churn_pipeline.joblib`, and checks it with the same startup checks the API uses. The build **fails** if the model file is missing (Docker reports `artifacts/churn_pipeline.joblib: not found`) or if it fails those checks, for example a model that does not match `config.yaml` (the build log shows the API's message). The build log and `/app/MODEL_SHA256` in the image record the model's SHA-256, which matches the `model_sha256` W&B records for the training run that produced it (when that run had tracking turned on).
+
+1. Make sure a current model exists: run `python -m src.train` locally, or use the container's `train` command below.
+2. Build the image (repeat after retraining or changing code):
+
+   ```bash
+   docker build -t churn-predictor .
+   ```
+
+3. Serve the API. Inside the container it listens on port 8080 (or `$PORT`, which Cloud Run sets). `-p 8001:8080` makes it available at port 8001 on your Mac, which avoids the front end's mock on port 8000:
+
+   ```bash
+   docker run --rm -p 8001:8080 churn-predictor
+   ```
+
+   Then open http://127.0.0.1:8001/docs or call `/health` and `/predict` as in the API section. Stop it with Ctrl+C.
+
+4. Run the test suite inside the container (offline; no credentials needed):
+
+   ```bash
+   docker run --rm churn-predictor test
+   ```
+
+### Training in the container
+
+Training needs two logins: Google, to download the dataset from the bucket, and W&B, to record the run. **Neither is stored in the image.** You connect your own login files to the container, read-only, only when you run `train`. The new model and validation report are written back to your Mac's `artifacts/` and `reports/` folders:
+
+```bash
+docker run --rm \
+  -v "$HOME/.config/gcloud/application_default_credentials.json:/secrets/gcloud.json:ro" \
+  -e GOOGLE_APPLICATION_CREDENTIALS=/secrets/gcloud.json \
+  -v "$HOME/.netrc:/home/app/.netrc:ro" \
+  -v "$PWD/artifacts:/app/artifacts" \
+  -v "$PWD/reports:/app/reports" \
+  churn-predictor train
+```
+
+- `-v source:destination:ro` connects a file or folder from your Mac into the container; `:ro` makes it read-only.
+- The first line uses the Google login created by `gcloud auth application-default login` (see the [cloud storage walkthrough](docs/CLOUD_STORAGE.md)); the `.netrc` line uses the W&B login created by `wandb login`.
+- Add `--tracking-mode disabled` after `train` to skip W&B (then the `.netrc` line is not needed).
+- Then rebuild the image (step 2) so it serves the new model.
+
+### What goes into the image
+
+`.dockerignore` uses an allow-list. Only `requirements.txt`, `config.yaml`, `src/`, `tests/`, `reports/`, the entry-point script, and the one model file are sent to Docker. Data CSVs, virtual environments, `.git`, W&B output, and credential files are never included. The committed reports are included so the one-time test evaluation still refuses to run again inside the container.
+
+Docker Desktop on an Apple-silicon Mac builds ARM images by default. Cloud Run runs on x86 (amd64), so deployment (step 7) builds the image for that platform.
+
 ## Prediction API
 
-Branch: `feat/prediction-api` (step 5), in progress. The API serves the final model with [FastAPI](https://fastapi.tiangolo.com/) and the uvicorn web server. It loads the saved model once at startup and answers each request in milliseconds; it never trains, reads the dataset, or touches the test set.
+Branch: `feat/prediction-api` (step 5), merged in PR #6. The API serves the final model with [FastAPI](https://fastapi.tiangolo.com/) and the uvicorn web server. It loads the saved model once at startup and answers each request in milliseconds; it never trains, reads the dataset, or touches the test set.
 
 ### Run it locally
 
@@ -193,10 +245,10 @@ This is our agreed project map. Steps 1–4 are merged into `main` through PRs #
 | 3 | `feat/training-pipeline` | Split data, preprocess, train a simple model, and evaluate using configuration-controlled settings; merged in PR #3 |
 | 4 | `feat/experiment-tracking` | Record experiment parameters, metrics, and model artifacts in Weights & Biases; merged in PR #4 |
 | 4b | `feat/model-selection` | Compare model versions in W&B, choose the threshold on validation data, and score the test set once; merged in PR #5 |
-| 5 | `feat/prediction-api` | Build and test the `/predict` endpoint locally; in progress |
+| 5 | `feat/prediction-api` | Build and test the `/predict` endpoint locally; merged in PR #6 |
 | 6 | `feat/docker` | Package and run training and serving in Docker |
 | 7 | `feat/api-deployment` | Deploy and verify the public API |
-| 8 | `feat/frontend` | Build and deploy an interface that calls the API |
+| 8 | `feat/frontend` | Build and deploy an interface that calls the API; Streamlit app in progress |
 | 9 | `docs/final-review` | Finish usage and deployment instructions, limitations, and collaboration reflections |
 
 Each step follows: **branch → implementation and explanation → review → commit and push → PR → Jim's merge**. After a PR is merged, update local `main` from GitHub and create the next branch from that updated `main` so it inherits the completed work and this map. We create branches as each step begins, rather than creating all branches in advance.
@@ -204,6 +256,14 @@ Each step follows: **branch → implementation and explanation → review → co
 Update this map's status and [collaboration log](collaboration.md) as each step progresses. Jim decides when to begin the next step and approves any changes to the plan.
 
 Cloud storage is implemented and was verified against the configured bucket in PR #2. See the [cloud storage walkthrough](docs/CLOUD_STORAGE.md) for setup, authentication, and `python -m src.storage download`. Cloud transfers preserve all 7,043 source rows; the tenure exclusion remains a separate modeling step.
+
+## Front-end app
+
+Branch: `feat/frontend` (step 8, in progress). A Streamlit app in [`frontend/`](frontend/README.md) collects a customer's eight inputs, sends them to the prediction API, and shows the churn probability, the prediction, and how it compares with the 35% threshold. Tenure and monthly charges are limited to the ranges seen in the training data, because the model has not been tested outside them.
+
+Below the prediction, an **Explore how the model sees this customer** section asks the API "what if?" questions (the same customer with one detail changed) and charts the answers: which choices would change the risk most, how risk changes across tenure and monthly charges, and where the customer lands on logistic regression's S-curve.
+
+The front-end never loads the model; it only calls the API. Until the API is deployed, it is developed against a local stand-in API with fake predictions. See the [front-end README](frontend/README.md) to run it locally and for its tests. The public link will be added after deployment.
 
 ## Dataset
 
@@ -307,6 +367,7 @@ data/cloud/                Verified cloud download, Git-ignored
 reports/                   Aggregate data-quality, validation, experiment, threshold, and test reports
 docs/CLOUD_STORAGE.md       Cloud setup, authentication, and transfer walkthrough
 docs/EXPERIMENT_TRACKING.md W&B setup, usage, and verification
+frontend/                  Streamlit app, local stand-in API, and front-end tests
 wandb/                     Local W&B run files, Git-ignored
 artifacts/                 Recreated fitted pipeline, Git-ignored
 ```
