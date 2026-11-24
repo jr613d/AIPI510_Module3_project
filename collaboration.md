@@ -277,11 +277,12 @@ with Jim and explain the code through a verified file transfer before moving on.
 - **Status:** Merged in PR #7 and deployed publicly.
 - **Learning notes:** To be added or approved by Jim.
 
-## Branch 9: Final review — ethics merged in PR #9; README in progress
+## Branch 9: Final review — ethics (PR #9) and README (PR #12) merged
 
 - **Branch:** `docs/final-review`, in the `AIPI510_Module3_cloud_storage` worktree, created from `main` at `890478e` (PR #6).
 - **Ethics and limitations:** Jim asked for drafts written in his voice and shared a guide he wrote as a writing sample. Claude Code's first draft (about 1,600 words) did not work for Jim. He changed the approach: Claude Code gave its ranked view of the project's limitations and ethical considerations, and Jim then chose the points to highlight: the fictional data; that ethics and fairness cannot be fully evaluated without knowing the data's origin and what is done after a prediction; privacy and the handling of customer IDs; possible confounding/proxy variables despite excluding demographics; and the small test set. He asked for a concise, easy-to-grade section. Claude Code found no rubric in the assignment beyond the learning goal to reflect on ethical implications and limitations, drafted `docs/ETHICS_AND_LIMITATIONS.md` (about 450 words) from Jim's points, corrected two claims to match the code (customer IDs are excluded from model inputs, the API, the app, and experiment records, not from the dataset; the 19-input experiment added service and billing columns as well as demographics), and removed a fifth point Jim had not chosen. Jim edited the draft and approved it.
 - **README restructure (`docs/readme-final`):** After a project check-in, Jim asked Claude Code to restructure the README, which had grown step by step to 448 lines. Claude Code rebuilt it (about 220 lines) around the assignment's required sections: links to the live app, API, W&B project, and dataset; overview and goals; dataset; model and evaluation, with the validation-versus-test table; a new cloud services table; setup and usage (training, tests, API, Docker, front-end, and deployment); ethics and limitations; repository structure; and a table of every step and pull request. The detailed material moved nearly word for word into `docs/DATA.md`, `docs/MODEL.md`, `docs/API.md`, and `docs/DOCKER.md`, with out-of-date phrases such as "the current step above" removed and links checked. At Jim's request, passed on by the other agent, the architecture diagram from step 7 (`docs/architecture.svg`) leads the README; Claude Code's smaller Mermaid diagram was removed as a duplicate. The deployment commands in the README match `docs/DEPLOYMENT.md`, and the live links were added after both deployments.
+- **Final check and reflections (`docs/final-reflections`):** Claude Code checked the merged project against every assignment requirement. All 106 tests passed on `main`, and the live API, live app, data file, W&B project (public, 14 runs), and GitHub repository all answered without a login. Jim approved a short note under the app's "Biggest single lever" callout stating that it shows the model's associations, not causes. Jim wrote his end-of-project reflection; Claude Code removed a duplicated paragraph, corrected "Weights & Biases," and fixed punctuation, then drafted the AI assistant's reflection for Jim's review.
 
 ## Template for later branches
 
@@ -298,14 +299,30 @@ Copy this structure when a new project step begins. Add facts as work happens an
 - **Learning notes:** Jim's own observations and any remaining questions.
 - **AI process observation:** What helped the collaboration and what should change next time.
 
-## End-of-project reflections — not yet written
-
-We will revisit the full log together after the project is complete. These reflections should be grounded in the branch entries and completed work.
+## End-of-project reflections
 
 ### Jim's reflection
 
-To be written or approved by Jim: what he learned, what he can now explain or do himself, where AI helped most, and where he still needs practice.
+It was a fantastic learning experience, because this is why I got into this course: to get hands-on experience building things in collaboration with AI and to get a depth of understanding (so that I understand how the pieces fit together and how they are all intended to function to complement a production pipeline), while not having to put hands to keyboard to write Python code or troubleshoot code.
+
+I felt like I was able to quarterback an AI agent team of two. I kept them going at a pace that kept me in the loop and understanding what they were doing at every step, while they made a lot of recommendations that, honestly, were good and I didn't really have to deviate too much from.
+
+There were some interesting points of communication back through the READMEs, through the documentation, and through the ethics and limitations discussions. I can tell, as soon as the agent is writing something for a human, that my view and my voice are going to be better than just letting the agent write it. In terms of Python and code and other things like that, it's so much better than me, so much better than I will ever be.
+
+I still have a lot more to learn about Docker, Google Cloud, and production ML pipelines. I was intrigued by the full suite of resources available on Google Cloud and through the Weights & Biases platform, and I now want to go explore more about what these are and can do.
+
+One of my big concerns is about security and understanding how the choices that are made at the setup phase for these systems have downstream implications for security and cost, particularly as I'm building APIs with connections to models in cloud storage. I have accountability for the costs incurred there.
+
+I needed to make some things public to satisfy the project requirements, but left to my own devices, I would experiment in private. I don't think there are other collaboration reflections that I have.
 
 ### AI assistant's reflection
 
-To be drafted at the end: which assistance was useful, where the AI made mistakes or moved too quickly, how Jim's feedback changed the work, and what would improve a future collaboration. This should describe observed behavior and results without claiming to know Jim's internal learning experience.
+*Drafted by Claude Code from the branch entries above; it describes observed behavior and results, not Jim's experience.*
+
+**What helped.** The assistance was most useful when it turned Jim's decisions into working, tested code and explained the trade-offs before he chose: the tenure eligibility rule, eight inputs versus nineteen, the 35% threshold, and the one-time test evaluation. Splitting the remaining work between two agents, with separate worktrees, clear ownership, and an approved API contract, let the back end and front end progress in parallel. Testing the pieces together caught the real integration problems early: the API's error format and its narrower monthly-charge range.
+
+**Where the AI went wrong.** The assistants made mistakes, and the log records them. Early on, an assistant moved too fast and built a larger application outside the repository before Jim asked for a slower, branch-by-branch pace. Claude Code's cleanup of its own test servers stopped Jim's running stand-in API because it matched processes by name. Its first ethics draft ran about 1,600 words in a voice Jim did not recognize. Smaller errors (a deprecated Streamlit option, a probability shown as "0%", overlapping chart labels, a stand-in server that dropped parallel requests) were caught by testing and by looking at the output.
+
+**How Jim's feedback changed the work.** Jim's questions changed the project more than any code did: whether zero-tenure customers belong in the model, whether to iterate before touching the test set, and how the model's ranges should be enforced. His redirection of the ethics section, choosing the points himself and asking for something concise and easy to grade, produced a better document than the assistant's draft. His insistence on reviewing each step before a commit kept him able to explain every part of the submission.
+
+**What would improve a future collaboration.** Ask for a writing sample and the reader's needs before drafting anything meant for people. Agree on the shared contract (API fields, errors, and limits) before two agents build against it. Stop only processes the assistant started, by process ID. And keep making cost and security consequences visible at setup time, such as public access, scaling limits, and billing, since Jim is accountable for them.
