@@ -39,9 +39,63 @@ Test results are a little lower than validation (ROC AUC 0.849, precision 57.3%,
 
 All runs are in the W&B project `aipi510-churn`: the 8 experiments and the threshold comparison (group `model-selection`), the final training run, and the `final-test` run.
 
+## Docker
+
+Branch: `feat/docker` (step 6), in progress. One image runs the whole project through three entry points: `serve` (the default), `train`, and `test`. It uses the official `python:3.13.18-slim` base, installs `requirements.txt`, and runs as an ordinary user rather than root. Install [Docker Desktop](https://www.docker.com/products/docker-desktop/) and start it before running these commands.
+
+### Workflow: train → build → run
+
+The trained model is **built into the image**, so the image serves without downloading anything or needing any login. The build copies `artifacts/churn_pipeline.joblib`, and checks it with the same startup checks the API uses. The build **fails** if the model file is missing (Docker reports `artifacts/churn_pipeline.joblib: not found`) or if it fails those checks, for example a model that does not match `config.yaml` (the build log shows the API's message). The build log and `/app/MODEL_SHA256` in the image record the model's SHA-256, which matches the `model_sha256` W&B records for the training run that produced it (when that run had tracking turned on).
+
+1. Make sure a current model exists: run `python -m src.train` locally, or use the container's `train` command below.
+2. Build the image (repeat after retraining or changing code):
+
+   ```bash
+   docker build -t churn-predictor .
+   ```
+
+3. Serve the API. Inside the container it listens on port 8080 (or `$PORT`, which Cloud Run sets). `-p 8001:8080` makes it available at port 8001 on your Mac, which avoids the front end's mock on port 8000:
+
+   ```bash
+   docker run --rm -p 8001:8080 churn-predictor
+   ```
+
+   Then open http://127.0.0.1:8001/docs or call `/health` and `/predict` as in the API section. Stop it with Ctrl+C.
+
+4. Run the test suite inside the container (offline; no credentials needed):
+
+   ```bash
+   docker run --rm churn-predictor test
+   ```
+
+### Training in the container
+
+Training needs two logins: Google, to download the dataset from the bucket, and W&B, to record the run. **Neither is stored in the image.** You connect your own login files to the container, read-only, only when you run `train`. The new model and validation report are written back to your Mac's `artifacts/` and `reports/` folders:
+
+```bash
+docker run --rm \
+  -v "$HOME/.config/gcloud/application_default_credentials.json:/secrets/gcloud.json:ro" \
+  -e GOOGLE_APPLICATION_CREDENTIALS=/secrets/gcloud.json \
+  -v "$HOME/.netrc:/home/app/.netrc:ro" \
+  -v "$PWD/artifacts:/app/artifacts" \
+  -v "$PWD/reports:/app/reports" \
+  churn-predictor train
+```
+
+- `-v source:destination:ro` connects a file or folder from your Mac into the container; `:ro` makes it read-only.
+- The first line uses the Google login created by `gcloud auth application-default login` (see the [cloud storage walkthrough](docs/CLOUD_STORAGE.md)); the `.netrc` line uses the W&B login created by `wandb login`.
+- Add `--tracking-mode disabled` after `train` to skip W&B (then the `.netrc` line is not needed).
+- Then rebuild the image (step 2) so it serves the new model.
+
+### What goes into the image
+
+`.dockerignore` uses an allow-list. Only `requirements.txt`, `config.yaml`, `src/`, `tests/`, `reports/`, the entry-point script, and the one model file are sent to Docker. Data CSVs, virtual environments, `.git`, W&B output, and credential files are never included. The committed reports are included so the one-time test evaluation still refuses to run again inside the container.
+
+Docker Desktop on an Apple-silicon Mac builds ARM images by default. Cloud Run runs on x86 (amd64), so deployment (step 7) builds the image for that platform.
+
 ## Prediction API
 
-Branch: `feat/prediction-api` (step 5), in progress. The API serves the final model with [FastAPI](https://fastapi.tiangolo.com/) and the uvicorn web server. It loads the saved model once at startup and answers each request in milliseconds; it never trains, reads the dataset, or touches the test set.
+Branch: `feat/prediction-api` (step 5), merged in PR #6. The API serves the final model with [FastAPI](https://fastapi.tiangolo.com/) and the uvicorn web server. It loads the saved model once at startup and answers each request in milliseconds; it never trains, reads the dataset, or touches the test set.
 
 ### Run it locally
 
@@ -193,8 +247,8 @@ This is our agreed project map. Steps 1–4 are merged into `main` through PRs #
 | 3 | `feat/training-pipeline` | Split data, preprocess, train a simple model, and evaluate using configuration-controlled settings; merged in PR #3 |
 | 4 | `feat/experiment-tracking` | Record experiment parameters, metrics, and model artifacts in Weights & Biases; merged in PR #4 |
 | 4b | `feat/model-selection` | Compare model versions in W&B, choose the threshold on validation data, and score the test set once; merged in PR #5 |
-| 5 | `feat/prediction-api` | Build and test the `/predict` endpoint locally; in progress |
-| 6 | `feat/docker` | Package and run training and serving in Docker |
+| 5 | `feat/prediction-api` | Build and test the `/predict` endpoint locally; merged in PR #6 |
+| 6 | `feat/docker` | Package and run training and serving in Docker; in progress |
 | 7 | `feat/api-deployment` | Deploy and verify the public API |
 | 8 | `feat/frontend` | Build and deploy an interface that calls the API |
 | 9 | `docs/final-review` | Finish usage and deployment instructions, limitations, and collaboration reflections |

@@ -189,7 +189,7 @@ with Jim and explain the code through a verified file transfer before moving on.
 - **Status:** Code committed; final reports and these documentation updates await Jim's review before a commit, push, and PR.
 - **Learning notes:** To be added or approved by Jim.
 
-## Branch 5: Prediction API — in progress
+## Branch 5: Prediction API — merged in PR #6
 
 - **Date and goal:** November 23, 2026. Serve the final model through a local `/predict` endpoint that a front end can call.
 - **Work split:** Jim divided the remaining work between two AI agents in separate worktrees: this one owns the back end (API, Docker, deployment), and the other builds the Streamlit front end against an API contract Jim approved (request fields, response fields, `/health`, readable 4xx errors, CORS).
@@ -208,6 +208,27 @@ with Jim and explain the code through a verified file transfer before moving on.
 - **Verification:** The AI assistant retrained locally with W&B disabled, to avoid adding a run that only adds recorded ranges. Validation metrics were unchanged (ROC AUC 0.8488; 216 caught, 161 false alarms at 0.35). All 83 tests pass, including 14 new API tests that use a synthetic model, and `pip check` is clean. It also started the real server and checked `/health`, two `/predict` requests with `curl`, and the `/docs` page. The test client prints a deprecation warning about httpx; it does not affect the API.
 - **Trying it in the browser:** Jim's first attempt to open the docs page failed for two reasons. The server was not running, and port 8000 was occupied by the front-end agent's mock API, which has no docs page. The AI assistant explained this, ran the real API on port 8001, and added a note on ports to the README.
 - **Status:** Jim reviewed the API in the browser and authorized a commit and push. The PR is next.
+
+## Branch 6: Docker — in progress
+
+- **Date and goal:** November 23, 2026. Package the project in one Docker image with entry points for serving and training, built and run locally.
+- **Jim's decisions:** Approved one image with `serve`, `train`, and `test` commands, and building the trained model into the image. The build fails if the model is missing or mismatched. Credentials are connected only at run time for training and are never stored in the image. Jim installed Docker Desktop himself.
+- **AI assistance:** Wrote the `Dockerfile` (Python 3.13.18-slim, non-root user, a build-time model check, and a recorded model SHA-256), `docker-entrypoint.sh`, an allow-list `.dockerignore`, and the README's Docker section. Explained the Apple-silicon (ARM) versus Cloud Run (x86) difference for step 7.
+- **Verification:** The AI assistant built the image (836 MB) and confirmed the following:
+  - All 83 tests pass inside the container.
+  - The container runs as a non-root user and contains no data CSVs or credential files.
+  - `serve` answers `/health`, `/predict` (including the readable errors), and `/docs`, and honors a `PORT` setting as Cloud Run requires.
+  - An unknown command exits with a usage message.
+  - `train` without credentials stops with Google's "credentials not found" message.
+  - Builds fail as intended when the model is missing or `config.yaml` has an invalid threshold.
+
+  Jim then ran `train` in the container himself, connecting his Google and W&B logins read-only.
+  - The run downloaded and verified the cloud data and reproduced the validation results exactly (ROC AUC 0.8488; 216 caught, 161 false alarms).
+  - It was recorded as W&B run `udfqgkyz` in `jr613-d/aipi510-churn`.
+  - Jim first had to reload his shell profile so the terminal could find the `docker` command.
+
+  The AI assistant rebuilt the image with that model. The image's recorded model SHA-256 (`5c1ddc44…`) matches the file the run produced, and the rebuilt image served the same predictions.
+- **Status:** Jim reviewed the results and authorized a commit and push. The PR is next.
 
 ## Template for later branches
 
