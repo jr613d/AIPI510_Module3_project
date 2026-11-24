@@ -7,7 +7,7 @@ prediction is an HTTP request to the API.
 ## What the page does
 
 - **Inputs.** Tenure and monthly charges are sliders limited to the ranges in the
-  training data (1–72 months; $18.25–$118.75 in 5-cent steps). The model has not
+  training data (1–72 months; $18.40–$118.60 in 5-cent steps), the same limits the API enforces. The model has not
   been tested outside these ranges. The six choices (contract, payment method,
   paperless billing, internet service, tech support, online security) show every
   option at once. Without internet service, tech support and online security are
@@ -100,12 +100,23 @@ From the repository root:
 frontend/.venv/bin/python -m unittest discover -s frontend/tests -v
 ```
 
-The 19 tests run against the stand-in API on a temporary port, with no cloud
+The 20 tests run against the stand-in API on a temporary port, with no cloud
 access. They cover the request format and input rules, response checking and
 error messages, the "what if?" variations, and the page itself (slider limits,
-prediction display, locked add-ons, the explore section, and stale results).
+prediction display, locked add-ons, the explore section, and stale results),
+plus the label grouping in the explore chart.
 The six page tests use Streamlit's headless `AppTest` and are skipped in an
 environment without Streamlit.
+
+## Testing with the real API locally
+
+The project API (`src/api.py`, step 5) can run on your computer. From the
+repository root, with the main `.venv` (it needs a trained model in `artifacts/`):
+
+```bash
+.venv/bin/python -m src.api --port 8012
+API_URL=http://127.0.0.1:8012 frontend/.venv/bin/streamlit run frontend/app.py
+```
 
 ## Deployment
 

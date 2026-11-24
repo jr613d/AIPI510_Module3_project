@@ -20,8 +20,10 @@ CHOICES = {
                       "Bank transfer (automatic)", "Credit card (automatic)"],
     "PaperlessBilling": ["Yes", "No"],
 }
+# Ranges of the model's TRAINING data (reports/training_validation.json, input_ranges).
+# The API rejects values outside them, so the sliders stop at the same limits.
 TENURE_RANGE = (1, 72)            # Months; the model was trained on tenure >= 1.
-MONTHLY_CHARGES_RANGE = (18.25, 118.75)
+MONTHLY_CHARGES_RANGE = (18.40, 118.60)
 FIELDS = ("tenure", "MonthlyCharges", "Contract", "InternetService", "TechSupport",
           "OnlineSecurity", "PaymentMethod", "PaperlessBilling")
 TIMEOUT_SECONDS = 30  # Cloud services can take a few seconds to wake up.
@@ -122,7 +124,8 @@ FIELD_LABELS = {
     "TechSupport": "Tech support", "OnlineSecurity": "Online security",
 }
 TENURE_POINTS = [1, 3, 6, 9, 12, 18, 24, 30, 36, 42, 48, 54, 60, 66, 72]
-CHARGE_POINTS = [round(18.25 + step * 10.05, 2) for step in range(11)]  # $18.25 … $118.75
+CHARGE_POINTS = [round(MONTHLY_CHARGES_RANGE[0] + step * (MONTHLY_CHARGES_RANGE[1] - MONTHLY_CHARGES_RANGE[0]) / 10, 2)
+                 for step in range(11)]  # 11 evenly spaced points across the range
 
 
 def with_change(payload, field, value):

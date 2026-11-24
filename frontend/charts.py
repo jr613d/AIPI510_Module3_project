@@ -25,6 +25,30 @@ def _threshold_rule(threshold, c):
         color=c["muted"], strokeDash=[4, 4], strokeWidth=1.5).encode(y="y:Q")
 
 
+def option_labels(data, gap=0.08):
+    """Label the other options under their dots, merging dots closer than `gap`.
+
+    Close dots share one label (e.g. "Bank transfer / Credit card") so text never
+    overlaps; each dot's exact value stays in its tooltip.
+    """
+    rows = []
+    others = data[~data["current"]].sort_values("probability")
+    for field, group in others.groupby("field", sort=False):
+        cluster = []
+        for _, row in group.iterrows():
+            if cluster and row["probability"] - cluster[-1]["probability"] > gap:
+                rows.append(_merge(field, cluster))
+                cluster = []
+            cluster.append(row)
+        rows.append(_merge(field, cluster))
+    return rows
+
+
+def _merge(field, cluster):
+    names = " / ".join(row["option"].replace(" (automatic)", "") for row in cluster)
+    return field, sum(row["probability"] for row in cluster) / len(cluster), names
+
+
 def lever_chart(levers, threshold, c):
     """Dot plot: one row per choice, one dot per option, this customer's dot in orange."""
     data = pd.DataFrame(levers)
@@ -46,12 +70,7 @@ def lever_chart(levers, threshold, c):
         tooltip=[alt.Tooltip("field:N", title="Input"), alt.Tooltip("option:N", title="Option"),
                  alt.Tooltip("probability:Q", title="Churn probability", format=".0%")],
     )
-    # Name the other options under their dots; options landing on the same spot share a label.
-    others = data[~data["current"]].assign(
-        spot=lambda d: d["probability"].round(2),
-        option=lambda d: d["option"].str.replace(" (automatic)", "", regex=False))
-    names = (others.groupby(["field", "spot"], as_index=False)
-             .agg(probability=("probability", "mean"), option=("option", " / ".join)))
+    names = pd.DataFrame(option_labels(data), columns=["field", "probability", "option"])
     labels = alt.Chart(names).mark_text(dy=15, fontSize=10, color=c["muted"]).encode(
         y=y, x="probability:Q", text="option:N")
     cut = pd.DataFrame({"x": [threshold], "label": [f"{threshold:.0%} threshold"]})

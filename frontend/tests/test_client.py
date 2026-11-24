@@ -156,3 +156,22 @@ class ExploreTests(MockServerCase):
         rows = [{"field": "Contract", "option": "A", "probability": 0.2, "current": True},
                 {"field": "Contract", "option": "B", "probability": 0.4, "current": False}]
         self.assertIsNone(biggest_lever(rows))
+
+
+class ChartLabelTests(unittest.TestCase):
+    def test_close_options_share_one_label_and_far_ones_do_not(self):
+        try:
+            import pandas as pd
+            from charts import option_labels
+        except ImportError:
+            self.skipTest("Chart libraries are not installed in this environment.")
+        rows = pd.DataFrame([
+            {"field": "Payment method", "option": "Mailed check", "probability": 0.57, "current": False},
+            {"field": "Payment method", "option": "Credit card (automatic)", "probability": 0.60, "current": False},
+            {"field": "Payment method", "option": "Electronic check", "probability": 0.67, "current": True},
+            {"field": "Contract", "option": "Two year", "probability": 0.35, "current": False},
+            {"field": "Contract", "option": "One year", "probability": 0.50, "current": False},
+        ])
+        labels = {(field, name) for field, _, name in option_labels(rows)}
+        self.assertEqual(labels, {("Payment method", "Mailed check / Credit card"),
+                                  ("Contract", "Two year"), ("Contract", "One year")})

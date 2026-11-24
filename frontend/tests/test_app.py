@@ -54,7 +54,7 @@ class AppPageTests(AppCase):
         app = self.run_app()
         self.assertEqual((app.slider(key="tenure").min, app.slider(key="tenure").max), (1, 72))
         monthly = app.slider(key="monthly")
-        self.assertEqual((monthly.min, monthly.max, monthly.step), (18.25, 118.75, 0.05))
+        self.assertEqual((monthly.min, monthly.max, monthly.step), (18.40, 118.60, 0.05))
         self.assertIn("has not been tested outside these ranges", app.caption[0].value)
 
     def test_prediction_is_displayed(self):
