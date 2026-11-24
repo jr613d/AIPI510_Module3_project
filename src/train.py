@@ -125,6 +125,9 @@ def train(config_path=ROOT / "config.yaml"):
         pipeline.fit(inputs, target)
     metrics = validation_metrics(pipeline, splits["validation"], settings)
     expanded = pipeline.named_steps["preprocessor"].get_feature_names_out().tolist()
+    # The serving API rejects numeric inputs outside the range the model was fitted on.
+    input_ranges = {column: {"min": float(inputs[column].min()), "max": float(inputs[column].max())}
+                    for column in settings["numeric_features"]}
     report = {
         "evaluation_partition": "validation",
         "test_evaluated": False,
@@ -136,6 +139,7 @@ def train(config_path=ROOT / "config.yaml"):
         "input_features": feature_names(settings),
         "encoded_feature_count": len(expanded),
         "encoded_feature_names": expanded,
+        "input_ranges": input_ranges,
         "metrics": metrics,
         "versions": {"python": platform.python_version(), **{
             name: version(name) for name in (
@@ -146,7 +150,8 @@ def train(config_path=ROOT / "config.yaml"):
     report_path.parent.mkdir(parents=True, exist_ok=True)
     joblib.dump({"pipeline": pipeline, "settings": settings,
                  "processed_sha256": report["processed_sha256"],
-                 "data_source": report["data_source"]}, model_path)
+                 "data_source": report["data_source"],
+                 "input_ranges": input_ranges}, model_path)
     report_path.write_text(json.dumps(report, indent=2, allow_nan=False) + "\n", encoding="utf-8")
     return pipeline, report
 
