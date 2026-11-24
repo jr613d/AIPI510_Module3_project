@@ -1,0 +1,4 @@
+# Local environment and Streamlit secrets (API_URL) stay out of Git.
+.venv/
+.streamlit/secrets.toml
+__pycache__/
