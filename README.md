@@ -14,11 +14,9 @@ We will also report **precision** (of customers flagged as churning, how many ac
 
 Accuracy alone would be misleading: approximately 73.5% of customers in this sample stayed, so predicting `No` for everyone would appear 73.5% accurate while missing every customer who churned. These metrics will help us evaluate model behavior; the assignment emphasizes a reproducible production pipeline rather than achieving a particular score.
 
-## Current step: model selection and final evaluation
+## Model selection and final evaluation
 
-Branch: `feat/model-selection`.
-
-Experiment tracking was merged in PR #4. In this step we used W&B to compare model versions on **validation data**, chose the final model, and then scored it **once** on the held-out test data.
+Merged in PR #5 (branch `feat/model-selection`). In this step we used W&B to compare model versions on **validation data**, chose the final model, and then scored it **once** on the held-out test data.
 
 **1. Experiments** (`python -m src.experiments`, results in [reports/experiments.md](reports/experiments.md)). We trained 8 versions: the 8-input model and an all-19-input model, each with regularization strength `C` = 0.01, 0.1, 1, and 10. Validation ROC AUC ranged only from 0.8487 to 0.8532. Changing `C` made no meaningful difference, and all 19 inputs scored about 0.004 higher than 8, which is within the random variation expected for about 1,000 validation customers. Jim kept the **8-input model with `C = 1.0`**. It is simpler to explain, needs a shorter input form, and leaves out gender and other demographic inputs.
 
@@ -193,10 +191,10 @@ This is our agreed project map. Steps 1–4 are merged into `main` through PRs #
 | 3 | `feat/training-pipeline` | Split data, preprocess, train a simple model, and evaluate using configuration-controlled settings; merged in PR #3 |
 | 4 | `feat/experiment-tracking` | Record experiment parameters, metrics, and model artifacts in Weights & Biases; merged in PR #4 |
 | 4b | `feat/model-selection` | Compare model versions in W&B, choose the threshold on validation data, and score the test set once; merged in PR #5 |
-| 5 | `feat/prediction-api` | Build and test the `/predict` endpoint locally; in progress |
+| 5 | `feat/prediction-api` | Build and test the `/predict` endpoint locally; merged in PR #6 |
 | 6 | `feat/docker` | Package and run training and serving in Docker |
 | 7 | `feat/api-deployment` | Deploy and verify the public API |
-| 8 | `feat/frontend` | Build and deploy an interface that calls the API |
+| 8 | `feat/frontend` | Build and deploy an interface that calls the API; Streamlit app in progress |
 | 9 | `docs/final-review` | Finish usage and deployment instructions, limitations, and collaboration reflections |
 
 Each step follows: **branch → implementation and explanation → review → commit and push → PR → Jim's merge**. After a PR is merged, update local `main` from GitHub and create the next branch from that updated `main` so it inherits the completed work and this map. We create branches as each step begins, rather than creating all branches in advance.
@@ -204,6 +202,14 @@ Each step follows: **branch → implementation and explanation → review → co
 Update this map's status and [collaboration log](collaboration.md) as each step progresses. Jim decides when to begin the next step and approves any changes to the plan.
 
 Cloud storage is implemented and was verified against the configured bucket in PR #2. See the [cloud storage walkthrough](docs/CLOUD_STORAGE.md) for setup, authentication, and `python -m src.storage download`. Cloud transfers preserve all 7,043 source rows; the tenure exclusion remains a separate modeling step.
+
+## Front-end app
+
+Branch: `feat/frontend` (step 8, in progress). A Streamlit app in [`frontend/`](frontend/README.md) collects a customer's eight inputs, sends them to the prediction API, and shows the churn probability, the prediction, and how it compares with the 35% threshold. Tenure and monthly charges are limited to the ranges seen in the training data, because the model has not been tested outside them.
+
+Below the prediction, an **Explore how the model sees this customer** section asks the API "what if?" questions (the same customer with one detail changed) and charts the answers: which choices would change the risk most, how risk changes across tenure and monthly charges, and where the customer lands on logistic regression's S-curve.
+
+The front-end never loads the model; it only calls the API. Until the API is deployed, it is developed against a local stand-in API with fake predictions. See the [front-end README](frontend/README.md) to run it locally and for its tests. The public link will be added after deployment.
 
 ## Dataset
 
@@ -307,6 +313,7 @@ data/cloud/                Verified cloud download, Git-ignored
 reports/                   Aggregate data-quality, validation, experiment, threshold, and test reports
 docs/CLOUD_STORAGE.md       Cloud setup, authentication, and transfer walkthrough
 docs/EXPERIMENT_TRACKING.md W&B setup, usage, and verification
+frontend/                  Streamlit app, local stand-in API, and front-end tests
 wandb/                     Local W&B run files, Git-ignored
 artifacts/                 Recreated fitted pipeline, Git-ignored
 ```
