@@ -256,6 +256,30 @@ with Jim and explain the code through a verified file transfer before moving on.
 - **Status:** Awaiting the deployed API. Remaining work: deploy to Streamlit Community Cloud with the API's address as a secret, verify against the real API, and add the public link.
 - **Learning notes:** To be added or approved by Jim.
 
+## Branch 7: API deployment — in progress
+
+- **Date and goal:** November 23, 2026. Deploy the API publicly and verify it with real HTTP requests.
+- **Choosing the platform:** The AI assistant compared Cloud Run, Cloud Functions, AWS or Azure, and platforms outside the assignment's list (Render, Hugging Face Spaces). It recommended Cloud Run, because it runs the tested Docker image unchanged in the same Google project. Jim chose Cloud Run on the condition that everything could be done from the command line, since he does not like the web console. He decided to run every `gcloud` command himself, using his own login, while the AI assistant wrote and explained each one.
+- **Cost limits:** Jim asked for a $5 **hard cap**, not just a budget email. The AI assistant explained that Google Cloud has no built-in spending cap, and that billing data lags by hours. It proposed a budget that sends messages to a small "cost guard" function.
+  - Jim chose the guard's targeted shut-off: make the API and data private, rather than disabling billing for the whole project.
+  - The AI assistant wrote the guard and its tests.
+  - Jim then set it aside to finish the project first, judging the risk low. The deployed API's one-instance limit is the current safeguard, and the guard's code is kept for later.
+- **Account setup:** The first checks showed that the `gcloud` CLI was not logged in, separately from the Python login used in earlier steps. Jim ran `gcloud auth login` and set the default project.
+  - The project sits under an organization, `james-e-redden-org`, that Jim had not known about. Google creates one automatically for some accounts.
+  - The effective sharing policy allows public access (`allowAll`), so a public Cloud Run service was possible. This probably explains why the earlier attempt to make the bucket public needed extra steps.
+- **Deployment:** The AI assistant built an x86 image on the Mac. The build was slow because the Mac emulates x86 and the network was slow; it carries the W&B-tracked model `5c1ddc44…`.
+  - Jim created the Artifact Registry repository, connected Docker to it, and pushed the image.
+  - He then deployed `churn-api` by digest. The deploy used a dedicated runtime identity with no permissions; public access; 1 CPU and 1 GiB; min 0 and max 1 instances; and a 30-second timeout.
+- **Verification:** The AI assistant tested the public URL with no login:
+  - `/health` returned ok.
+  - `/predict` returned the same probability as locally (0.6705, "Yes" at 0.35).
+  - Invalid input returned the readable 422 errors.
+  - `/docs` loads, and CORS allows any site.
+  - Jim also tried the live API himself and confirmed that it worked.
+- **Architecture diagram:** While the image built, Jim asked for a system architecture diagram. He liked it and asked for it to be front and center for his professor. The AI assistant made it a standalone image, `docs/architecture.svg`, with automatic light and dark versions, and checked how it renders.
+- **Coordinating with the README rewrite:** The front-end agent was restructuring the README on `docs/readme-final`, so Jim passed along its request. To avoid a conflict, the deployment instructions went into a new `docs/DEPLOYMENT.md` instead of the README. The README was left unchanged on this branch, and the diagram is ready for the rewritten README to show at the top.
+- **Status:** The API is live. Jim authorized a commit and push of `docs/DEPLOYMENT.md`, the diagram, and this entry.
+
 ## Template for later branches
 
 Copy this structure when a new project step begins. Add facts as work happens and update the status when the step finishes.
