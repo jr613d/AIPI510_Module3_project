@@ -73,7 +73,9 @@ def parse_prediction(body):
 def _error_detail(response):
     """Pull a readable message out of an error response, if there is one."""
     try:
-        detail = response.json().get("detail")
+        body = response.json()
+        # The project API sends {"error": "...", "details": [...]}; FastAPI's default is "detail".
+        detail = body.get("error") or body.get("detail")
     except (ValueError, AttributeError):
         return response.text[:200] or response.reason
     if isinstance(detail, list):  # FastAPI-style validation errors

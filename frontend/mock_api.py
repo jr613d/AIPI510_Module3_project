@@ -59,10 +59,10 @@ class Handler(BaseHTTPRequestHandler):
         try:
             body = json.loads(self.rfile.read(int(self.headers.get("Content-Length", 0))))
         except (ValueError, json.JSONDecodeError):
-            return self.send_json(400, {"detail": "Request body must be JSON."})
+            return self.send_json(400, {"error": "Request body must be JSON."})
         problem = validate(body)
         if problem:
-            return self.send_json(422, {"detail": problem})
+            return self.send_json(422, {"error": problem, "details": []})
         probability = fake_probability(body)
         self.send_json(200, {"churn_probability": probability, "threshold": THRESHOLD,
                              "churn_prediction": "Yes" if probability >= THRESHOLD else "No"})

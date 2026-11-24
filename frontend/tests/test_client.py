@@ -91,6 +91,10 @@ class MockAPITests(MockServerCase):
             "detail": [{"msg": "Input should be a valid integer"}]})
         with self.assertRaisesRegex(APIError, "valid integer"):
             predict(self.url, {}, session=session)
+        session.post.return_value = Mock(status_code=422, json=lambda: {
+            "error": "tenure must be between 1 and 72.", "details": []})
+        with self.assertRaisesRegex(APIError, "tenure must be between 1 and 72"):
+            predict(self.url, {}, session=session)
         session.post.return_value = Mock(status_code=503)
         with self.assertRaisesRegex(APIError, "HTTP 503"):
             predict(self.url, {}, session=session)

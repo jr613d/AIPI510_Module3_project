@@ -114,6 +114,16 @@
     "categorical__PaperlessBilling_No",
     "categorical__PaperlessBilling_Yes"
   ],
+  "input_ranges": {
+    "tenure": {
+      "min": 1.0,
+      "max": 72.0
+    },
+    "MonthlyCharges": {
+      "min": 18.4,
+      "max": 118.6
+    }
+  },
   "metrics": {
     "roc_auc": 0.8488464049582978,
     "precision": 0.5729442970822282,
