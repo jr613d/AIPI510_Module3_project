@@ -209,6 +209,10 @@ with Jim and explain the code through a verified file transfer before moving on.
 - **Trying it in the browser:** Jim's first attempt to open the docs page failed for two reasons. The server was not running, and port 8000 was occupied by the front-end agent's mock API, which has no docs page. The AI assistant explained this, ran the real API on port 8001, and added a note on ports to the README.
 - **Status:** Jim reviewed the API in the browser and authorized a commit and push. The PR is next.
 
+## Branch 9: Final review — in progress
+
+- **Branch:** `docs/final-review`, in the `AIPI510_Module3_cloud_storage` worktree, created from `main` at `890478e` (PR #6).
+- **Ethics and limitations:** Jim asked for drafts written in his voice and shared a guide he wrote as a writing sample. Claude Code's first draft (about 1,600 words) did not work for Jim. He changed the approach: Claude Code gave its ranked view of the project's limitations and ethical considerations, and Jim then chose the points to highlight: the fictional data; that ethics and fairness cannot be fully evaluated without knowing the data's origin and what is done after a prediction; privacy and the handling of customer IDs; possible confounding/proxy variables despite excluding demographics; and the small test set. He asked for a concise, easy-to-grade section. Claude Code found no rubric in the assignment beyond the learning goal to reflect on ethical implications and limitations, drafted `docs/ETHICS_AND_LIMITATIONS.md` (about 450 words) from Jim's points, corrected two claims to match the code (customer IDs are excluded from model inputs, the API, the app, and experiment records, not from the dataset; the 19-input experiment added service and billing columns as well as demographics), and removed a fifth point Jim had not chosen. Jim edited the draft and approved it.
 ## Branch 6: Docker — in progress
 
 - **Date and goal:** November 23, 2026. Package the project in one Docker image with entry points for serving and training, built and run locally.
