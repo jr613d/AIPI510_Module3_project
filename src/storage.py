@@ -1,7 +1,9 @@
-"""Transfer the reviewed cleaned CSV to/from a private Google Cloud bucket.
+"""Transfer the reviewed cleaned CSV to/from a Google Cloud bucket.
 
 Run from the repository: python -m src.storage download
 Authentication uses Application Default Credentials, never a key in config.yaml.
+Downloads fall back to anonymous access when no Google login exists, which
+works only if the file is publicly readable. Uploads always require a login.
 """
 
 import argparse
@@ -11,8 +13,8 @@ from pathlib import Path
 import re
 import tempfile
 
-from google.api_core.exceptions import GoogleAPIError, PreconditionFailed
-from google.auth.exceptions import GoogleAuthError
+from google.api_core.exceptions import Forbidden, GoogleAPIError, PreconditionFailed, Unauthorized
+from google.auth.exceptions import DefaultCredentialsError, GoogleAuthError
 from google.cloud import storage
 from google.cloud.storage.exceptions import DataCorruption
 import yaml
@@ -61,10 +63,20 @@ def verify_content(content, expected):
         )
 
 
-def get_blob(settings, client=None):
+def get_blob(settings, client=None, allow_anonymous=False):
+    """Return the object handle and whether it is accessed anonymously."""
+    anonymous = False
     if client is None:
-        client = storage.Client(project=settings["project"])
-    return client.bucket(settings["bucket"]).blob(settings["object"])
+        try:
+            client = storage.Client(project=settings["project"])
+        except DefaultCredentialsError:
+            if not allow_anonymous:
+                raise
+            # No Google login on this machine: try the file as a public object.
+            client = storage.Client.create_anonymous_client()
+            anonymous = True
+            print("No Google login found; trying anonymous download (works only for a public file).")
+    return client.bucket(settings["bucket"]).blob(settings["object"]), anonymous
 
 
 def upload(config_path=ROOT / "config.yaml", client=None):
@@ -72,7 +84,7 @@ def upload(config_path=ROOT / "config.yaml", client=None):
     settings = load_settings(config_path)
     content = settings["upload_path"].read_bytes()
     verify_content(content, settings["expected_sha256"])
-    blob = get_blob(settings, client)
+    blob, _ = get_blob(settings, client)
     # Create-only: a repeat upload must not silently replace an existing dataset.
     blob.upload_from_string(
         content, content_type="text/csv", if_generation_match=0, timeout=60,
@@ -83,9 +95,19 @@ def upload(config_path=ROOT / "config.yaml", client=None):
 def download(config_path=ROOT / "config.yaml", client=None):
     """Always fetch cloud bytes; save atomically only after SHA-256 matches."""
     settings = load_settings(config_path)
-    blob = get_blob(settings, client)
+    blob, anonymous = get_blob(settings, client, allow_anonymous=True)
     # The sample is <1 MB. Holding it in memory lets us verify before writing.
-    content = blob.download_as_bytes(raw_download=True, checksum="auto", timeout=60)
+    try:
+        content = blob.download_as_bytes(raw_download=True, checksum="auto", timeout=60)
+    except (Forbidden, Unauthorized, GoogleAuthError) as error:
+        # A private file answers anonymous callers with 401, which surfaces as a refresh error.
+        if not anonymous:
+            raise
+        raise PermissionError(
+            f"gs://{settings['bucket']}/{settings['object']} is not publicly readable and no Google "
+            "login was found. Run 'gcloud auth application-default login' with an account that can "
+            "read the bucket, or use your own bucket (README: Reproducing without author credentials)."
+        ) from error
     verify_content(content, settings["expected_sha256"])
     destination = settings["download_path"]
     destination.parent.mkdir(parents=True, exist_ok=True)

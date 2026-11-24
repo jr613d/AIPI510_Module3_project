@@ -213,7 +213,7 @@ with Jim and explain the code through a verified file transfer before moving on.
 
 - **Branch:** `docs/final-review`, in the `AIPI510_Module3_cloud_storage` worktree, created from `main` at `890478e` (PR #6).
 - **Ethics and limitations:** Jim asked for drafts written in his voice and shared a guide he wrote as a writing sample. Claude Code's first draft (about 1,600 words) did not work for Jim. He changed the approach: Claude Code gave its ranked view of the project's limitations and ethical considerations, and Jim then chose the points to highlight: the fictional data; that ethics and fairness cannot be fully evaluated without knowing the data's origin and what is done after a prediction; privacy and the handling of customer IDs; possible confounding/proxy variables despite excluding demographics; and the small test set. He asked for a concise, easy-to-grade section. Claude Code found no rubric in the assignment beyond the learning goal to reflect on ethical implications and limitations, drafted `docs/ETHICS_AND_LIMITATIONS.md` (about 450 words) from Jim's points, corrected two claims to match the code (customer IDs are excluded from model inputs, the API, the app, and experiment records, not from the dataset; the 19-input experiment added service and billing columns as well as demographics), and removed a fifth point Jim had not chosen. Jim edited the draft and approved it.
-## Branch 6: Docker — in progress
+## Branch 6: Docker — merged in PR #8
 
 - **Date and goal:** November 23, 2026. Package the project in one Docker image with entry points for serving and training, built and run locally.
 - **Jim's decisions:** Approved one image with `serve`, `train`, and `test` commands, and building the trained model into the image. The build fails if the model is missing or mismatched. Credentials are connected only at run time for training and are never stored in the image. Jim installed Docker Desktop himself.
@@ -232,7 +232,18 @@ with Jim and explain the code through a verified file transfer before moving on.
   - Jim first had to reload his shell profile so the terminal could find the `docker` command.
 
   The AI assistant rebuilt the image with that model. The image's recorded model SHA-256 (`5c1ddc44…`) matches the file the run produced, and the rebuilt image served the same predictions.
-- **Status:** Jim reviewed the results and authorized a commit and push. The PR is next.
+- **Reproducibility without Jim's credentials:**
+  - Jim asked what the image contains, and how his professor could retrain from it without his Google or W&B logins.
+  - The AI assistant explained that the image holds addresses (bucket, file, W&B project) but no keys. Serving needs no credentials, but retraining would fail on the private bucket.
+  - It offered three ways to get the data (grant the grader read access, make the file public, or let them use their own bucket), plus options for W&B.
+  - **Jim's decisions:** make the data file publicly readable, with an anonymous-download fallback, and document the own-bucket route for full independence. Make the W&B project public and view-only, and link it. Document `--tracking-mode disabled` and "use your own W&B login" for retraining.
+  - **AI assistance:** Added the anonymous fallback to `src/storage.py`. It is used only for downloads when no Google login exists, the checksum check still applies, and a private file produces a clear explanation. Added 4 storage tests and wrote the README section "Reproducing without author credentials".
+  - **W&B result:** Jim made the W&B project public. The AI assistant confirmed with an anonymous query that it is readable without a login (14 runs).
+  - **Bucket result:** Jim changed the bucket's permissions, but anonymous requests were still refused after several minutes. The AI assistant listed likely causes, including an organization policy blocking public sharing. Jim first decided to rely on the data-sourcing scripts. He then worked out the console setting himself and made the file publicly downloadable, and supplied the direct link for the documentation.
+  - **Verification after the change:** The AI assistant confirmed that the public link returns the file and that its SHA-256 matches `config.yaml`. In a rebuilt container with no credentials, `train` downloaded the file anonymously, passed the checksum, and reproduced Jim's validation metrics exactly. 86 tests pass.
+  - **Final state:** The data is publicly readable, and the README links the direct download. The own-bucket route is documented for full independence. The anonymous fallback still checks the checksum, and for a private file it explains what to do instead of showing Google's generic credentials error.
+- **Status:** Docker merged in PR #8. The reproducibility follow-up (anonymous fallback and README section) was finished after that merge, so it goes in its own small PR.
+
 ## Branch 8: Front-end (Streamlit) — in progress
 
 - **Branch:** `feat/frontend`, in the `AIPI510_Module3_cloud_storage` worktree, created from `main` at merge commit `e18cbaf` (PR #5).

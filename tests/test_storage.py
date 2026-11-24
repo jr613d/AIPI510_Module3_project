@@ -6,8 +6,8 @@ import tempfile
 import unittest
 from unittest.mock import Mock, patch
 
-from google.api_core.exceptions import Forbidden, PreconditionFailed
-from google.auth.exceptions import DefaultCredentialsError
+from google.api_core.exceptions import Forbidden, PreconditionFailed, Unauthorized
+from google.auth.exceptions import DefaultCredentialsError, RefreshError
 from google.cloud.storage.blob import Blob
 import yaml
 
@@ -125,10 +125,42 @@ class StorageTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "inside data/cloud"):
                     load_settings(self.config_path)
 
-    def test_authentication_failure_propagates_without_saving(self):
+    def test_upload_requires_a_login(self):
         with patch("src.storage.storage.Client", side_effect=DefaultCredentialsError("No ADC")):
             with self.assertRaises(DefaultCredentialsError):
+                upload(self.config_path)
+
+    def test_download_without_login_falls_back_to_anonymous_and_still_verifies(self):
+        with patch("src.storage.storage.Client") as client_class:
+            client_class.side_effect = DefaultCredentialsError("No ADC")
+            client_class.create_anonymous_client.return_value = self.client
+            result = download(self.config_path)
+            client_class.create_anonymous_client.assert_called_once_with()
+        self.assertEqual(result.read_bytes(), self.content)
+        self.blob.download_as_bytes.return_value = b"tampered public file"
+        with patch("src.storage.storage.Client") as client_class:
+            client_class.side_effect = DefaultCredentialsError("No ADC")
+            client_class.create_anonymous_client.return_value = self.client
+            with self.assertRaisesRegex(ValueError, "checksum mismatch"):
                 download(self.config_path)
+        self.assertEqual(result.read_bytes(), self.content)
+
+    def test_anonymous_download_of_private_file_explains_and_saves_nothing(self):
+        for failure in (Unauthorized("Anonymous caller"), Forbidden("Not public"),
+                        RefreshError("Anonymous credentials cannot be refreshed.")):
+            with self.subTest(failure=type(failure).__name__):
+                self.blob.download_as_bytes.side_effect = failure
+                with patch("src.storage.storage.Client") as client_class:
+                    client_class.side_effect = DefaultCredentialsError("No ADC")
+                    client_class.create_anonymous_client.return_value = self.client
+                    with self.assertRaisesRegex(PermissionError, "not publicly readable"):
+                        download(self.config_path)
+                self.assertFalse(self.destination.exists())
+
+    def test_logged_in_user_without_access_gets_googles_error(self):
+        self.blob.download_as_bytes.side_effect = Forbidden("No access")
+        with self.assertRaises(Forbidden):
+            download(self.config_path, self.client)
         self.assertFalse(self.destination.exists())
 
 
