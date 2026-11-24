@@ -178,6 +178,9 @@ elif last:
             else:
                 st.info("No single change to these choices would lower this customer's risk.",
                         icon=":material/lightbulb:")
+            st.caption("This shows how the model's estimate changes, not what the customer "
+                       "would do. The model learned associations from fictional data, so it "
+                       "cannot show that a change would cause a customer to stay.")
         with curves_tab:
             st.markdown("How this customer's churn probability would change across the full "
                         "range of tenure and monthly charges, with everything else unchanged.")
