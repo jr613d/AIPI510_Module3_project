@@ -3,8 +3,10 @@
 ## What this step adds
 
 GitHub stores the code and configuration. Google Cloud Storage holds the
-cleaned CSV. Your local Google credentials authorize Python to access that
-private file. A bucket name is an address, not a password or access grant.
+cleaned CSV. The file is publicly readable, so downloads work without a
+login; your local Google credentials are needed only to upload or to use a
+private bucket of your own. A bucket name is an address, not a password or
+access grant.
 
 ```text
 HF source → src/ingest.py → data/processed/telco_churn.csv
@@ -20,13 +22,16 @@ the tenure eligibility rule is applied separately in model preprocessing.
 
 ## 1. Jim creates the bucket and uploads the cleaned file
 
-In your Google Cloud project, create a private Cloud Storage bucket. Keep
-public access prevention enabled and use uniform bucket-level access.
-You do not need to make this dataset publicly readable for the assignment.
-Others reproduce training by recreating the identical file and uploading it
-to their own bucket; see the README section "Reproducing without author
-credentials". Downloads without a Google login try anonymous access, which
-works only for a public file, and are still checksum-verified.
+In your Google Cloud project, create a Cloud Storage bucket with uniform
+bucket-level access. It started private, with public access prevention on.
+After the Docker step, Jim made the cleaned CSV **publicly readable** so
+graders can retrain without his login:
+https://storage.googleapis.com/kangaroo_baseball_field/telco_churn.csv.
+The data is IBM's public CC BY 4.0 sample, so this exposes nothing private.
+With uniform access, public read applies to every object in the bucket, so
+keep only this file in it. Downloads without a Google login fall back to
+anonymous access and are still checksum-verified; uploads always require a
+login. See the README section "Reproducing without author credentials".
 
 Upload **`data/processed/telco_churn.csv`**, not the original in `data/raw/`.
 Upload the file unchanged rather than opening and resaving it in a spreadsheet.
