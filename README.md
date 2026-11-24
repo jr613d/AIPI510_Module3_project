@@ -39,7 +39,7 @@ All runs are in the W&B project `aipi510-churn`: the 8 experiments and the thres
 
 ## Docker
 
-Branch: `feat/docker` (step 6), in progress. One image runs the whole project through three entry points: `serve` (the default), `train`, and `test`. It uses the official `python:3.13.18-slim` base, installs `requirements.txt`, and runs as an ordinary user rather than root. Install [Docker Desktop](https://www.docker.com/products/docker-desktop/) and start it before running these commands.
+Branch: `feat/docker` (step 6), merged in PR #8. One image runs the whole project through three entry points: `serve` (the default), `train`, and `test`. It uses the official `python:3.13.18-slim` base, installs `requirements.txt`, and runs as an ordinary user rather than root. Install [Docker Desktop](https://www.docker.com/products/docker-desktop/) and start it before running these commands.
 
 ### Workflow: train → build → run
 
@@ -278,7 +278,7 @@ This is our agreed project map. Steps 1–4 are merged into `main` through PRs #
 | 4 | `feat/experiment-tracking` | Record experiment parameters, metrics, and model artifacts in Weights & Biases; merged in PR #4 |
 | 4b | `feat/model-selection` | Compare model versions in W&B, choose the threshold on validation data, and score the test set once; merged in PR #5 |
 | 5 | `feat/prediction-api` | Build and test the `/predict` endpoint locally; merged in PR #6 |
-| 6 | `feat/docker` | Package and run training and serving in Docker |
+| 6 | `feat/docker` | Package and run training and serving in Docker; merged in PR #8 |
 | 7 | `feat/api-deployment` | Deploy and verify the public API |
 | 8 | `feat/frontend` | Build and deploy an interface that calls the API; Streamlit app in progress |
 | 9 | `docs/final-review` | Finish usage and deployment instructions, limitations, and collaboration reflections |
