@@ -20,7 +20,7 @@ prediction is an HTTP request to the API.
   four at a time, cached for 10 minutes):
   - *What would change the risk?* A dot plot: for each choice, the probability
     under every option, with this customer's option in orange and the
-    single biggest risk-lowering change called out.
+    single biggest risk-lowering change called out, with a note that it shows the model's associations, not causes.
   - *Tenure and charges:* the probability across the full tenure and
     monthly-charge ranges, with everything else unchanged.
   - *The S-curve:* how logistic regression turns a weighted score into a

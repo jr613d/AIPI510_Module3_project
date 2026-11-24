@@ -97,6 +97,8 @@ class ExploreSectionTests(AppCase):
         self.assertEqual(len(app.tabs), 3)
         self.assertTrue(any("Biggest single lever" in (info.proto.title or "") or
                             "lower this customer's" in info.value for info in app.info))
+        self.assertTrue(any("cannot show that a change would cause" in caption.value
+                            for caption in app.caption))
         self.assertFalse(app.error)
 
     def test_changing_an_input_asks_for_a_new_prediction(self):

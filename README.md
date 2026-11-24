@@ -13,7 +13,7 @@
 | **Experiment tracking** | [W&B project `aipi510-churn`](https://forge.coreweave.com/wandb/jr613-d/aipi510-churn) (public, view-only) |
 | **Dataset** | [IBM Telco Customer Churn on Hugging Face](https://huggingface.co/datasets/scikit-learn/churn-prediction) |
 
-This is Jim Redden's solo project, built with AI coding assistants. Jim made the project decisions and reviewed and merged every pull request; the assistants helped with implementation, testing, and explanations. The [collaboration log](collaboration.md) records who did what.
+This is Jim Redden's solo project, built with AI coding assistants. Jim made the project decisions and reviewed and merged every pull request; the assistants helped with implementation, testing, and explanations. The [AI Collaboration Summary](AI%20Collaboration%20Summary.md) is the short version of how we worked together; the [collaboration log](collaboration.md) has the full record.
 
 ## Project overview and goals
 
@@ -196,6 +196,7 @@ frontend/            Streamlit app, local stand-in API, and front-end tests
 reports/             Data summary, validation, experiment, threshold, and test reports
 docs/                Guides: data, model, API, Docker, deployment, cloud storage, tracking,
                      ethics, and the architecture diagram
+AI Collaboration Summary.md  Short summary of how the project was built with AI
 collaboration.md     How the project was built with AI assistance, step by step
 ```
 
@@ -219,4 +220,4 @@ Each step was built on its own branch and merged through a pull request after Ji
 | 8 | `feat/frontend` | Streamlit front-end (PR #7), deployed on Streamlit Community Cloud |
 | 9 | `docs/final-review`, `docs/readme-final` | Ethics and limitations (PR #9), final documentation, reflections |
 
-The [collaboration log](collaboration.md) records the decisions, AI assistance, corrections, and verification for every step.
+The [AI Collaboration Summary](AI%20Collaboration%20Summary.md) gives the short version, including the rules the AI followed and Jim's reflection. The [collaboration log](collaboration.md) records the decisions, AI assistance, corrections, and verification for every step.
