@@ -189,6 +189,26 @@ with Jim and explain the code through a verified file transfer before moving on.
 - **Status:** Code committed; final reports and these documentation updates await Jim's review before a commit, push, and PR.
 - **Learning notes:** To be added or approved by Jim.
 
+## Branch 5: Prediction API — in progress
+
+- **Date and goal:** November 23, 2026. Serve the final model through a local `/predict` endpoint that a front end can call.
+- **Work split:** Jim divided the remaining work between two AI agents in separate worktrees: this one owns the back end (API, Docker, deployment), and the other builds the Streamlit front end against an API contract Jim approved (request fields, response fields, `/health`, readable 4xx errors, CORS).
+- **Jim's questions and understanding:** Jim asked where everything would be hosted, where the model would live, and where requests would go. The AI assistant explained that step 5 runs only on his Mac, step 6 packages the same code in a container, and step 7 gives it a public address, with the front end calling that address. It also corrected two points in his summary: W&B records training rather than performing it, and at that moment the threshold and test evaluation were still being finished on the other branch. Jim also checked whether the assignment requires the model to come from a particular place; it only requires the API to load the trained model.
+- **Jim's decisions:**
+  - FastAPI with uvicorn.
+  - Build the small model file into the Docker image for the deployed API (implemented in steps 6–7), because it is simplest and serves reliably.
+  - The API needs elegant, or at least clear, error handling.
+  - Categories must match the training data exactly; the front end will use dropdowns.
+  - Tenure is documented as months and rounded to the nearest whole month.
+  - Values outside the training data's range are flagged and not allowed.
+  - Reject inconsistent internet-service combinations with a clear message.
+  - Allow calls from any website for now.
+- **Cost question:** Jim asked whether a bot could run up cloud charges and what the downside of allowing any website is. The AI assistant explained that CORS only governs browsers, so bots are unaffected either way; the real exposure is the public URL itself, which the assignment requires. Limiting the cost is a deployment setting (step 7).
+- **AI assistance:** Wrote `src/api.py` and `tests/test_api.py`, and added FastAPI, uvicorn, and httpx (for tests) to `requirements.txt`. Changed training to record the training partition's numeric ranges in the model file and validation report, so the API reads the ranges instead of hard-coding them. Allowed categories come from the fitted encoder, and the threshold from `config.yaml`. Wrote this step's README section.
+- **Verification:** The AI assistant retrained locally with W&B disabled, to avoid adding a run that only adds recorded ranges. Validation metrics were unchanged (ROC AUC 0.8488; 216 caught, 161 false alarms at 0.35). All 83 tests pass, including 14 new API tests that use a synthetic model, and `pip check` is clean. It also started the real server and checked `/health`, two `/predict` requests with `curl`, and the `/docs` page. The test client prints a deprecation warning about httpx; it does not affect the API.
+- **Trying it in the browser:** Jim's first attempt to open the docs page failed for two reasons. The server was not running, and port 8000 was occupied by the front-end agent's mock API, which has no docs page. The AI assistant explained this, ran the real API on port 8001, and added a note on ports to the README.
+- **Status:** Jim reviewed the API in the browser and authorized a commit and push. The PR is next.
+
 ## Template for later branches
 
 Copy this structure when a new project step begins. Add facts as work happens and update the status when the step finishes.

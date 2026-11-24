@@ -39,6 +39,77 @@ Test results are a little lower than validation (ROC AUC 0.849, precision 57.3%,
 
 All runs are in the W&B project `aipi510-churn`: the 8 experiments and the threshold comparison (group `model-selection`), the final training run, and the `final-test` run.
 
+## Prediction API
+
+Branch: `feat/prediction-api` (step 5), in progress. The API serves the final model with [FastAPI](https://fastapi.tiangolo.com/) and the uvicorn web server. It loads the saved model once at startup and answers each request in milliseconds; it never trains, reads the dataset, or touches the test set.
+
+### Run it locally
+
+Train first if `artifacts/churn_pipeline.joblib` does not exist or predates this step (`python -m src.train`), then:
+
+```bash
+python -m src.api                       # serves http://127.0.0.1:8000
+```
+
+**Port conflicts:** only one program can use a port at a time. During development the front end's mock API uses port 8000, so run the real API on another port with `python -m src.api --port 8001` and replace `8000` with `8001` in the addresses below. If startup fails with "address already in use", another server is already on that port. The server only answers while it is running; stop it with Ctrl+C.
+
+Open **http://127.0.0.1:8000/docs** for interactive documentation where you can send test requests in the browser. From another terminal:
+
+```bash
+curl http://127.0.0.1:8000/health
+curl -X POST http://127.0.0.1:8000/predict -H "Content-Type: application/json" \
+  -d '{"tenure": 12, "MonthlyCharges": 70.5, "Contract": "Month-to-month",
+       "InternetService": "Fiber optic", "TechSupport": "No", "OnlineSecurity": "No",
+       "PaymentMethod": "Electronic check", "PaperlessBilling": "Yes"}'
+```
+
+```json
+{"churn_probability": 0.6705, "churn_prediction": "Yes", "threshold": 0.35}
+```
+
+(The probability is returned unrounded.) `GET /health` returns `{"status": "ok"}`. `churn_prediction` is `Yes` when the probability is at or above the threshold in `config.yaml`.
+
+### Inputs
+
+| Field | Meaning and allowed values |
+| --- | --- |
+| `tenure` | Months as a customer, **1–72**. Decimals are rounded to the nearest whole month, with halves rounding up (0.5 → 1), before the range check. |
+| `MonthlyCharges` | Monthly bill in dollars, **18.40–118.60**. |
+| `Contract` | `Month-to-month`, `One year`, `Two year` |
+| `InternetService` | `DSL`, `Fiber optic`, `No` |
+| `TechSupport` | `Yes`, `No`, `No internet service` |
+| `OnlineSecurity` | `Yes`, `No`, `No internet service` |
+| `PaymentMethod` | `Electronic check`, `Mailed check`, `Bank transfer (automatic)`, `Credit card (automatic)` |
+| `PaperlessBilling` | `Yes`, `No` |
+
+Jim decided these rules:
+
+- **Exact categories.** Values must match the training data exactly, including capitalization. The front end will use dropdowns so users cannot mistype them.
+- **No predictions outside the training range.** The numeric ranges are the smallest and largest values in the training partition. Training now records them in the model file, and the API reads them from there. Values outside them are rejected rather than extrapolated.
+- **Consistent internet fields.** `TechSupport` and `OnlineSecurity` must be `No internet service` exactly when `InternetService` is `No`, as in every row of the data.
+- Numbers must be JSON numbers (not text such as `"12"`), and unexpected fields are rejected so typos are not silently ignored.
+
+### Errors
+
+Invalid requests return HTTP **422** with one plain-language sentence per problem, and every problem is reported at once:
+
+```json
+{
+  "error": "tenure must be between 1 and 72 months, the range in the training data; got 0 (after rounding). The model does not make predictions outside that range.",
+  "details": [{"field": "tenure", "message": "tenure must be between 1 and 72 months, ..."}]
+}
+```
+
+`details[].field` is `null` for problems involving several fields (such as the internet-field rule) or the whole request.
+
+The API **refuses to start** with a clear message if the model file is missing, was saved before training recorded input ranges, was trained on inputs or data that differ from `config.yaml`, or if the threshold is not between 0 and 1. It never runs with a mismatched model.
+
+Allowed values and ranges come from the saved model, and the threshold comes from `config.yaml`, so the `/docs` page always shows what the running model accepts. Cross-origin requests (CORS) are allowed from any website, for `GET` and `POST` only: the API is read-only, uses no logins or cookies, and stores nothing.
+
+### Tests
+
+`tests/test_api.py` checks the contract with a small synthetic model (no cloud, W&B, or real data): response fields, the threshold cutoff, rounding, ranges, categories, the internet-field rule, readable errors, CORS, and each startup refusal.
+
 ## Experiment tracking
 
 Merged in PR #4. Every training run is recorded in **Weights & Biases (W&B)** with the training settings, validation metrics, data fingerprint, Git commit, and a versioned copy of the fitted model. After a one-time `wandb login`, `python -m src.train` uploads a run to the `aipi510-churn` W&B project automatically. `--tracking-mode offline` saves the run locally instead, and `--tracking-mode disabled` skips W&B. See the [experiment tracking guide](docs/EXPERIMENT_TRACKING.md) for setup, what is recorded, and verification.
@@ -121,8 +192,8 @@ This is our agreed project map. Steps 1–4 are merged into `main` through PRs #
 | 2 | `feat/cloud-storage` | GCS storage and verified programmatic download implemented; merged in PR #2 |
 | 3 | `feat/training-pipeline` | Split data, preprocess, train a simple model, and evaluate using configuration-controlled settings; merged in PR #3 |
 | 4 | `feat/experiment-tracking` | Record experiment parameters, metrics, and model artifacts in Weights & Biases; merged in PR #4 |
-| 4b | `feat/model-selection` | Compare model versions in W&B, choose the threshold on validation data, and score the test set once; in progress |
-| 5 | `feat/prediction-api` | Build and test the `/predict` endpoint locally |
+| 4b | `feat/model-selection` | Compare model versions in W&B, choose the threshold on validation data, and score the test set once; merged in PR #5 |
+| 5 | `feat/prediction-api` | Build and test the `/predict` endpoint locally; in progress |
 | 6 | `feat/docker` | Package and run training and serving in Docker |
 | 7 | `feat/api-deployment` | Deploy and verify the public API |
 | 8 | `feat/frontend` | Build and deploy an interface that calls the API |
